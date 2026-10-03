@@ -98,3 +98,32 @@ button[disabled] {
 .restore:hover {
   border-color: var(--text);
 }
+
+/*
+ * A short window, which is what zooming in produces: tighten the controls so
+ * they stay within the height of the pilot view for as long as possible.
+ */
+@media (max-height: 640px) {
+  .feed-side,
+  .demo-controls {
+    gap: 6px;
+  }
+
+  .destroy {
+    margin: 2px 0 14px;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .restore {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+  }
+
+  .feed-side .stat-value {
+    font-size: 1.8rem;
+  }
+}

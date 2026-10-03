@@ -83,10 +83,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .pilot-screen {
-    width: 100%;
-  }
-
   .feed-screen {
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     grid-auto-rows: 96px;

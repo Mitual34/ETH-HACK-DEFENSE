@@ -123,3 +123,14 @@
     animation: none;
   }
 }
+
+/* A short window, which is what zooming in produces: pack the tiles closer so all of them still fit. */
+@media (max-height: 640px) {
+  .feed-screen {
+    gap: 4px;
+  }
+
+  .feed-tile {
+    min-height: 56px;
+  }
+}
