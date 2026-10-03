@@ -131,7 +131,7 @@ src/fakes.ts        fakes of every interface, for tests
 src/render.ts       DOM rendering (textContent only)
 src/fonts.ts        self-hosted Inter and IBM Plex Mono
 src/charts*.ts      pies, sparklines and the handover history
-src/*.css           theme tokens (styles), panel grid (layout), panels, charts, feed, controls
+src/*.css           theme tokens (styles), panel grid (layout), panels, charts, feed, wall, controls
 src/app.ts          wiring
 tests/              vitest suites
 ```

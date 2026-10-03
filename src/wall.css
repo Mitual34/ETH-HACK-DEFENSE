@@ -1,0 +1,125 @@
+/* The feed wall: one tile per drone. */
+
+/* Every drone's feed at once. */
+.feed-screen {
+  flex: 1;
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: var(--gap);
+}
+
+.feed-tile {
+  position: relative;
+  min-height: 64px;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* The pilot's view is the one tile with an amber frame. */
+.feed-tile[data-pilot="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 18px rgb(255 176 32 / 35%);
+}
+
+/* A destroyed drone stops working: no picture at all, just a dark tile that says so. */
+.feed-tile[data-stopped="true"] {
+  border-color: var(--alert);
+}
+
+.feed-tile[data-stopped="true"] .feed-surface {
+  visibility: hidden;
+}
+
+.feed-tile[data-stopped="true"]::after {
+  content: "NO SIGNAL";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--alert);
+  font-weight: var(--weight-title);
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+}
+
+.feed-surface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 22px 8px 0;
+  background: repeating-linear-gradient(135deg, #10161d 0 14px, #161d26 14px 28px);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+/* A small tile has no room for the placeholder sentence; its status already says NOT AVAILABLE. */
+.feed-tile .feed-placeholder {
+  font-size: 0;
+}
+
+/* Name in the top-left corner, status in the bottom-right, so they never collide. */
+.feed-tile-label,
+.feed-tile-status {
+  position: absolute;
+  line-height: 1.2;
+}
+
+/* Which drone this is: large enough to read from the back of a room. */
+.feed-tile-label {
+  top: 5px;
+  left: 5px;
+  padding: 2px 10px;
+  background: rgb(0 0 0 / 78%);
+  border-left: 5px solid var(--muted);
+  font-size: clamp(0.95rem, 1.3vw, 1.35rem);
+  font-weight: var(--weight-wordmark);
+  letter-spacing: 0.04em;
+}
+
+.feed-tile[data-pilot="true"] .feed-tile-label {
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+.feed-tile-status {
+  right: 5px;
+  bottom: 5px;
+  padding: 2px 6px;
+  background: rgb(0 0 0 / 78%);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.feed-tile[data-pilot="true"] .feed-tile-status {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: var(--weight-title);
+  animation: blink 800ms ease-in-out 1;
+}
+
+.feed-tile[data-stopped="true"] .feed-tile-status {
+  background: var(--alert);
+  color: var(--bg);
+  font-weight: var(--weight-title);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-tile[data-pilot="true"] .feed-tile-status {
+    animation: none;
+  }
+}
