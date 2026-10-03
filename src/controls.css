@@ -26,7 +26,7 @@
 }
 
 .destroy {
-  width: min(100%, 260px);
+  width: min(100%, 260px, 26vh);
   aspect-ratio: 1;
   padding: 0;
   border: 6px solid var(--destroy-deep);
@@ -36,10 +36,10 @@
     0 12px 0 var(--destroy-deep),
     0 18px 30px rgb(230 0 35 / 35%);
   color: #fff;
-  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  font-size: clamp(1.2rem, 4.6vh, 2.6rem);
   font-weight: var(--weight-wordmark);
   letter-spacing: 0.06em;
-  margin: 6px 0 22px;
+  margin: 4px 0 18px;
   border-style: solid;
 }
 

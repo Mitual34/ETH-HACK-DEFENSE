@@ -92,6 +92,10 @@ Anything else is dropped and counted on screen as malformed.
 
 ## Reading the screen
 
+The pilot view, the drone feeds and the DESTROY button sit side by side and are
+sized from the height of the window, so the whole demo fits on one screen at 100%
+zoom with no scrolling. The summary, handover and event log rows are below it.
+
 The screen is laid out like an operations dashboard: collapsible rows (Pilot,
 Summary, Handover, Event log) of bordered panels on a 24-column grid. Click a row
 title to collapse it.

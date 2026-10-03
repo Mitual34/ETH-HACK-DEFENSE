@@ -1,14 +1,33 @@
 /* The pilot screen and the feed wall. */
 
+/*
+ * Pilot view, feed wall and controls sit side by side and are sized from the
+ * height of the window, so all three fit on one screen at 100% zoom with no
+ * scrolling. The pilot picture takes whatever height is left under the header.
+ */
+:root {
+  /* Everything on the first screen above and below the pilot picture. */
+  --feed-chrome: 218px;
+}
+
 .feed {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(0, 1fr) clamp(150px, 15vw, 250px) minmax(220px, 290px);
   gap: var(--gap);
+}
+
+/* The wall is one column of tiles that shares out the height of the row. */
+.wall {
+  display: flex;
+  flex-direction: column;
 }
 
 /* One large picture: whichever drone is live. */
 .pilot-screen {
   position: relative;
+  width: min(100%, calc((100vh - var(--feed-chrome)) * 16 / 9));
+  min-width: min(100%, 280px);
+  margin: 0 auto;
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background: #000;
@@ -58,16 +77,17 @@
   letter-spacing: 0.2em;
 }
 
-/* Every drone's feed at once, as many per row as fit. */
+/* Every drone's feed at once. */
 .feed-screen {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
   gap: var(--gap);
 }
 
 .feed-tile {
   position: relative;
-  aspect-ratio: 16 / 9;
+  min-height: 64px;
   overflow: hidden;
   background: #000;
   border: 3px solid var(--line);
@@ -97,7 +117,7 @@
   place-items: center;
   color: var(--alert);
   font-weight: var(--weight-title);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   letter-spacing: 0.2em;
 }
 
@@ -112,30 +132,35 @@
 .feed-placeholder {
   display: grid;
   place-items: center;
-  padding: 0 8px;
+  padding: 22px 8px 0;
   background: repeating-linear-gradient(135deg, #10161d 0 14px, #161d26 14px 28px);
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
   text-align: center;
 }
 
-/* Name in the top-left corner, status in the bottom-left, so they never collide. */
+/* A small tile has no room for the placeholder sentence; its status already says NOT AVAILABLE. */
+.feed-tile .feed-placeholder {
+  font-size: 0;
+}
+
+/* Name in the top-left corner, status in the bottom-right, so they never collide. */
 .feed-tile-label,
 .feed-tile-status {
   position: absolute;
-  left: 8px;
   line-height: 1.2;
 }
 
 /* Which drone this is: large enough to read from the back of a room. */
 .feed-tile-label {
-  top: 8px;
-  padding: 3px 12px;
+  top: 5px;
+  left: 5px;
+  padding: 2px 10px;
   background: rgb(0 0 0 / 78%);
   border-left: 5px solid var(--muted);
-  font-size: clamp(1.1rem, 2vw, 1.7rem);
+  font-size: clamp(0.95rem, 1.3vw, 1.35rem);
   font-weight: var(--weight-wordmark);
   letter-spacing: 0.04em;
 }
@@ -146,13 +171,14 @@
 }
 
 .feed-tile-status {
-  bottom: 8px;
-  padding: 3px 8px;
+  right: 5px;
+  bottom: 5px;
+  padding: 2px 6px;
   background: rgb(0 0 0 / 78%);
   border-radius: var(--radius);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
   color: var(--muted);
 }
 
@@ -169,9 +195,19 @@
   font-weight: var(--weight-title);
 }
 
-@media (max-width: 640px) {
+/* On a narrow window the three parts stack, and the wall becomes rows of tiles. */
+@media (max-width: 900px) {
   .feed {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pilot-screen {
+    width: 100%;
+  }
+
+  .feed-screen {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-auto-rows: 96px;
   }
 }
 
