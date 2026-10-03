@@ -82,6 +82,10 @@ Anything else is dropped and counted on screen as malformed.
 
 ## Reading the screen
 
+The screen is laid out like an operations dashboard: collapsible rows (Pilot,
+Summary, Handover, Event log) of bordered panels on a 24-column grid. Click a row
+title to collapse it.
+
 - **Epoch**: the highest epoch seen on any event. It never goes down.
 - **Lead**: nodes reporting `LEAD` at that epoch. More than one raises an alarm.
 - **Handover timer**: starts at `FEED_LOSS`. While running it counts on the
@@ -111,7 +115,8 @@ src/clock.ts        clock and scheduler interfaces
 src/fakes.ts        fakes of every interface, for tests
 src/render.ts       DOM rendering (textContent only)
 src/fonts.ts        self-hosted Inter and IBM Plex Mono
-src/*.css           theme tokens (styles), panels, guide thread
+src/charts*.ts      pies, sparklines and the handover history
+src/*.css           theme tokens (styles), panel grid (layout), panels, charts, guide, feed
 src/app.ts          wiring
 tests/              vitest suites
 ```

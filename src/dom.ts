@@ -14,6 +14,18 @@ const ELEMENT_IDS = {
   stages: "stages",
   nodes: "nodes",
   log: "log",
+  accepted: "accepted",
+  nodeCount: "node-count",
+  statesChart: "states-chart",
+  statesLegend: "states-legend",
+  packetsChart: "packets-chart",
+  epochSpark: "epoch-spark",
+  nodesSpark: "nodes-spark",
+  historyChart: "history-chart",
+  historyLast: "history-last",
+  historyMean: "history-mean",
+  historyMax: "history-max",
+  handoverCount: "handover-count",
   feedScreen: "feed-screen",
   feedBadge: "feed-badge",
   feedSource: "feed-source",
@@ -52,6 +64,11 @@ export function findElements(root: Document): DashboardElements {
 /** The sections the guide can show or hide, marked with data-panel in the page. */
 export function findPanels(root: ParentNode): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>("[data-panel]"));
+}
+
+/** The collapsible rows that group panels, marked with data-row in the page. */
+export function findRows(root: ParentNode): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>("[data-row]"));
 }
 
 /** The parts of the screen the guide thread can sit next to, keyed by data-anchor. */

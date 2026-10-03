@@ -7,6 +7,8 @@
   position: relative;
   display: grid;
   gap: 8px;
+  /* Inside a panel grid the thread takes a full row of its own. */
+  grid-column: 1 / -1;
   max-width: 460px;
   padding: 12px 0;
 }
@@ -27,11 +29,6 @@
 .guide[data-side="above"]::before {
   bottom: -6px;
   border-top-color: var(--raised);
-}
-
-/* Inside a panel the thread needs room from the content around it. */
-.handover > .guide {
-  margin: 4px 0 12px;
 }
 
 .guide-progress {

@@ -22,6 +22,8 @@ const FINISHED_ANSWER =
 export interface GuideScreen {
   panels: readonly HTMLElement[];
   anchors: ReadonlyMap<string, HTMLElement>;
+  /** Rows that group panels; a row with nothing to show is hidden with them. */
+  rows: readonly HTMLElement[];
 }
 
 export class Guide {
@@ -100,9 +102,7 @@ export class Guide {
     guideProgress.textContent = `${LABEL} · ${this.index + 1} of ${this.steps.length}`;
     guideQuestion.textContent = step.question;
     guideAnswer.textContent = step.answer;
-    for (const panel of this.screen.panels) {
-      panel.hidden = !(step.show as readonly string[]).includes(panel.dataset["panel"] ?? "");
-    }
+    this.showPanels((name) => (step.show as readonly string[]).includes(name));
     this.place(step.anchor, step.side);
     this.renderButtons(step);
   }
@@ -124,8 +124,16 @@ export class Guide {
     guideQuestion.textContent = FINISHED_QUESTION;
     guideAnswer.textContent = FINISHED_ANSWER;
     guideControls.hidden = true;
-    for (const panel of this.screen.panels) panel.hidden = false;
+    this.showPanels(() => true);
     this.place(FINISHED_PLACEMENT.anchor, FINISHED_PLACEMENT.side);
+  }
+
+  /** Shows the wanted panels, and hides any row left with no panel to show. */
+  private showPanels(isWanted: (name: string) => boolean): void {
+    for (const panel of this.screen.panels) panel.hidden = !isWanted(panel.dataset["panel"] ?? "");
+    for (const row of this.screen.rows) {
+      row.hidden = row.querySelector("[data-panel]:not([hidden])") === null;
+    }
   }
 
   /** Moves the thread next to the part of the screen it is talking about. */

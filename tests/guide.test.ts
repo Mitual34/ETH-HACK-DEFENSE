@@ -8,7 +8,19 @@ import { applyEvent, initialState, leadsAtCurrentEpoch, type DashboardState } fr
 import { parseSwarmEvent } from "../src/validate";
 import { LIMITS, mountShell } from "./helpers";
 
-const PANEL_NAMES: PanelName[] = ["feed", "epoch", "lead", "dropped", "handover", "stages", "nodes", "log"];
+const PANEL_NAMES: PanelName[] = [
+  "feed",
+  "epoch",
+  "lead",
+  "size",
+  "states",
+  "dropped",
+  "handover",
+  "stages",
+  "history",
+  "nodes",
+  "log",
+];
 const WAIT_STEP = GUIDE_STEPS.findIndex((step) => step.waitFor !== undefined);
 const ACTION_STEP = GUIDE_STEPS.findIndex((step) => step.action !== undefined);
 const MAX_WORDS_PER_ANSWER = 30;
@@ -38,7 +50,7 @@ function startGuide(): Harness {
     restoreLead: () => calls.push("restoreLead"),
     freeRun: () => calls.push("freeRun"),
   };
-  const guide = new Guide(elements, { panels, anchors }, GUIDE_STEPS, controls);
+  const guide = new Guide(elements, { panels, anchors, rows: [] }, GUIDE_STEPS, controls);
   guide.start();
   return { elements, panels, calls, guide };
 }

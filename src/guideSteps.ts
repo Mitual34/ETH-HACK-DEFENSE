@@ -4,7 +4,18 @@
  * placed next to the panel it explains.
  */
 
-export type PanelName = "feed" | "epoch" | "lead" | "dropped" | "handover" | "stages" | "nodes" | "log";
+export type PanelName =
+  | "feed"
+  | "epoch"
+  | "lead"
+  | "size"
+  | "states"
+  | "dropped"
+  | "handover"
+  | "stages"
+  | "history"
+  | "nodes"
+  | "log";
 export type AnchorName = "feed" | "summary" | "handover" | "stages" | "nodes";
 export type GuideSide = "above" | "below";
 export type GuideActionName = "loseLead" | "restoreLead";

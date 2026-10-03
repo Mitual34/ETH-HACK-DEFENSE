@@ -9,7 +9,9 @@
     />
     <title>TALOS dashboard</title>
     <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/layout.css" />
     <link rel="stylesheet" href="/src/panels.css" />
+    <link rel="stylesheet" href="/src/charts.css" />
     <link rel="stylesheet" href="/src/guide.css" />
     <link rel="stylesheet" href="/src/feed.css" />
   </head>
@@ -19,12 +21,18 @@
         <h1 class="wordmark">TA<span class="wordmark-accent">LOS</span></h1>
         <p class="tagline">The pilot&rsquo;s eye never closes.</p>
       </div>
-      <p id="connection" class="pill" data-status="connecting">Connecting to relay</p>
+      <p class="crumbs">Dashboards &rsaquo; Swarm &rsaquo; Handover / Overview</p>
     </header>
 
-    <p id="demo-notice" class="notice" hidden>
-      Simulated demonstration &middot; decision delay is scripted, picture switch is measured
-    </p>
+    <div class="toolbar">
+      <p class="chip">
+        <span class="chip-label">Data source</span>
+        <span id="connection" class="chip-value" data-status="connecting">Connecting to relay</span>
+      </p>
+      <p id="demo-notice" class="notice" hidden>
+        Simulated demonstration &middot; decision delay is scripted, picture switch is measured
+      </p>
+    </div>
 
     <section id="guide" class="guide" aria-label="Guided demo" hidden>
       <p id="guide-progress" class="guide-progress"></p>
@@ -39,77 +47,181 @@
     </section>
 
     <main>
-      <section class="feed" data-panel="feed" data-anchor="feed" aria-label="Pilot feed">
-        <div id="feed-screen" class="feed-screen">
-          <p id="feed-lost" class="feed-lost" role="alert">WAITING FOR LEAD</p>
-          <p id="feed-badge" class="feed-badge"></p>
-          <p id="feed-source" class="feed-source"></p>
+      <details class="row" data-row open>
+        <summary>Pilot</summary>
+        <div class="feed" data-panel="feed" data-anchor="feed">
+          <section class="panel" aria-label="Pilot feed">
+            <h2>Pilot feed</h2>
+            <div id="feed-screen" class="feed-screen">
+              <p id="feed-lost" class="feed-lost" role="alert">WAITING FOR LEAD</p>
+              <p id="feed-badge" class="feed-badge"></p>
+              <p id="feed-source" class="feed-source"></p>
+            </div>
+          </section>
+          <section class="panel feed-side" aria-label="Feed switch">
+            <h2>Feed switch</h2>
+            <button id="destroy" class="destroy" type="button">DESTROY</button>
+            <p id="switch-time" class="stat-value" aria-live="polite">&mdash;</p>
+            <p id="switch-note" class="switch-note">press DESTROY to time a switch</p>
+          </section>
         </div>
-        <div class="feed-side">
-          <button id="destroy" class="destroy" type="button">DESTROY</button>
-          <h2>Feed switch</h2>
-          <p id="switch-time" class="switch-time telemetry" aria-live="polite">&mdash;</p>
-          <p id="switch-note" class="switch-note">press DESTROY to time a switch</p>
-        </div>
-      </section>
+      </details>
 
-      <section class="summary" data-anchor="summary" aria-label="Swarm summary">
-        <div class="tile" data-panel="epoch">
-          <h2>Epoch</h2>
-          <p id="epoch" class="big">0</p>
+      <details class="row" data-row open>
+        <summary>Summary</summary>
+        <div class="grid" data-anchor="summary">
+          <section class="panel stat w4" data-panel="epoch">
+            <h2>Epoch</h2>
+            <p id="epoch" class="stat-value">0</p>
+            <div id="epoch-spark" class="spark"></div>
+          </section>
+          <section class="panel stat w4" data-panel="lead">
+            <h2>Lead</h2>
+            <p id="lead" class="stat-value">none</p>
+            <p id="lead-alarm" class="alarm" role="alert" hidden>More than one node reports LEAD</p>
+          </section>
+          <section class="panel stat w4" data-panel="size">
+            <h2>Nodes</h2>
+            <p id="node-count" class="stat-value">0</p>
+            <div id="nodes-spark" class="spark"></div>
+          </section>
+          <section class="panel w12 tall" data-panel="nodes" data-anchor="nodes">
+            <h2>Nodes</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Node</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Epoch</th>
+                  <th scope="col">Authority</th>
+                </tr>
+              </thead>
+              <tbody id="nodes"></tbody>
+            </table>
+          </section>
+          <section class="panel w6" data-panel="states">
+            <h2>Node states</h2>
+            <div class="pie">
+              <div id="states-chart" class="pie-chart"></div>
+              <table class="legend">
+                <thead>
+                  <tr>
+                    <th scope="col">State</th>
+                    <th scope="col">Value</th>
+                  </tr>
+                </thead>
+                <tbody id="states-legend"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel w6" data-panel="dropped">
+            <h2>Packets</h2>
+            <div class="pie">
+              <div id="packets-chart" class="pie-chart"></div>
+              <table class="legend">
+                <thead>
+                  <tr>
+                    <th scope="col">Packets</th>
+                    <th scope="col">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-key="accepted">
+                    <td>Accepted</td>
+                    <td id="accepted">0</td>
+                  </tr>
+                  <tr data-key="malformed">
+                    <td>Malformed</td>
+                    <td id="malformed">0</td>
+                  </tr>
+                  <tr data-key="stale">
+                    <td>Out of order</td>
+                    <td id="stale">0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
-        <div class="tile" data-panel="lead">
-          <h2>Lead</h2>
-          <p id="lead" class="big">none</p>
-          <p id="lead-alarm" class="alarm" role="alert" hidden>
-            More than one node reports LEAD at this epoch
-          </p>
-        </div>
-        <div class="tile" data-panel="dropped">
-          <h2>Dropped packets</h2>
-          <p><span id="malformed" class="telemetry">0</span> malformed</p>
-          <p><span id="stale" class="telemetry">0</span> out of order</p>
-        </div>
-      </section>
+      </details>
 
-      <section class="handover" data-panel="handover" data-anchor="handover" aria-label="Handover timer">
-        <p id="banner" class="banner" data-status="idle" aria-live="polite">No handover observed</p>
-        <p id="timer" class="timer">&mdash;</p>
-        <p id="timer-note" class="note">Waiting for a FEED_LOSS event</p>
-        <table class="stages" data-panel="stages" data-anchor="stages">
-          <thead>
-            <tr>
-              <th scope="col">Stage</th>
-              <th scope="col">Duration</th>
-            </tr>
-          </thead>
-          <tbody id="stages"></tbody>
-        </table>
-      </section>
-
-      <section data-panel="nodes" data-anchor="nodes" aria-label="Node states">
-        <h2>Nodes</h2>
-        <ul id="nodes" class="nodes"></ul>
-      </section>
-
-      <section data-panel="log" aria-label="Event log">
-        <h2>Event log</h2>
-        <div class="log-scroll">
-          <table class="log">
-            <thead>
-              <tr>
-                <th scope="col">Time</th>
-                <th scope="col">Node</th>
-                <th scope="col">Epoch</th>
-                <th scope="col">State</th>
-                <th scope="col">Event</th>
-                <th scope="col">Reason</th>
-              </tr>
-            </thead>
-            <tbody id="log"></tbody>
-          </table>
+      <details class="row" data-row open>
+        <summary>Handover</summary>
+        <div class="grid">
+          <section class="panel stat w6" data-panel="handover" data-anchor="handover">
+            <h2>Feed-dark time</h2>
+            <p id="banner" class="banner" data-status="idle" aria-live="polite">No handover observed</p>
+            <p id="timer" class="stat-value">&mdash;</p>
+            <p id="timer-note" class="note">Waiting for a FEED_LOSS event</p>
+          </section>
+          <section class="panel w6" data-panel="stages" data-anchor="stages">
+            <h2>Stages</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Stage</th>
+                  <th scope="col">Duration</th>
+                </tr>
+              </thead>
+              <tbody id="stages"></tbody>
+            </table>
+          </section>
+          <section class="panel w12" data-panel="history">
+            <h2>Handover history</h2>
+            <div class="series">
+              <div id="history-chart" class="series-chart"></div>
+              <table class="legend">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Last</th>
+                    <th scope="col">Mean</th>
+                    <th scope="col">Max</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-key="accepted">
+                    <td>feed-dark</td>
+                    <td id="history-last">&mdash;</td>
+                    <td id="history-mean">&mdash;</td>
+                    <td id="history-max">&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>handovers</td>
+                    <td id="handover-count">0</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
-      </section>
+      </details>
+
+      <details class="row" data-row open>
+        <summary>Event log</summary>
+        <div class="grid">
+          <section class="panel w24" data-panel="log">
+            <h2>Events</h2>
+            <div class="log-scroll">
+              <table class="log">
+                <thead>
+                  <tr>
+                    <th scope="col">Time</th>
+                    <th scope="col">Node</th>
+                    <th scope="col">Epoch</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Event</th>
+                    <th scope="col">Reason</th>
+                  </tr>
+                </thead>
+                <tbody id="log"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
     </main>
 
     <script type="module" src="/src/main.ts"></script>

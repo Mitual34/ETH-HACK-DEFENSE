@@ -10,6 +10,8 @@ const MAX_LEADS = 1;
 const TIMER_DIGITS = 2;
 const LOG_TIME_DIGITS = 3;
 const UNKNOWN_NODE = "unknown";
+const STALE_LABEL = "Stale epoch";
+const CURRENT_LABEL = "Current";
 
 const CONNECTION_LABELS: Record<ConnectionStatus, string> = {
   connecting: "Connecting to relay",
@@ -26,27 +28,31 @@ export function renderSummary(elements: DashboardElements, state: DashboardState
   elements.epoch.textContent = String(state.epoch);
   elements.lead.textContent = leads.length === 0 ? "none" : leads.join(", ");
   elements.leadAlarm.hidden = leads.length <= MAX_LEADS;
+  elements.nodeCount.textContent = String(state.nodes.size);
+  elements.accepted.textContent = String(state.acceptedCount);
   elements.malformed.textContent = String(state.malformedCount);
   elements.stale.textContent = String(state.staleCount);
 }
 
-function nodeCard(node: NodeView, currentEpoch: number): HTMLElement {
-  const card = make("li", "node", "");
-  card.dataset["state"] = node.state;
-  card.append(make("span", "node-id", node.nodeId), make("span", "node-state", node.state));
-  card.append(make("span", "node-epoch", `epoch ${node.epoch}`));
-  if (node.epoch < currentEpoch) {
-    card.dataset["stale"] = "true";
-    card.append(make("span", "node-stale", "stale epoch"));
-  }
-  return card;
+function nodeRow(node: NodeView, currentEpoch: number): HTMLElement {
+  const stale = node.epoch < currentEpoch;
+  const row = make("tr", "node-row", "");
+  row.dataset["state"] = node.state;
+  row.dataset["stale"] = String(stale);
+  row.append(
+    make("td", "node-id", node.nodeId),
+    make("td", "node-state", node.state),
+    make("td", "node-epoch", String(node.epoch)),
+    make("td", "", stale ? STALE_LABEL : CURRENT_LABEL),
+  );
+  return row;
 }
 
 export function renderNodes(elements: DashboardElements, state: DashboardState): void {
   const nodes = [...state.nodes.values()].sort((left, right) =>
     left.nodeId.localeCompare(right.nodeId, undefined, { numeric: true }),
   );
-  elements.nodes.replaceChildren(...nodes.map((node) => nodeCard(node, state.epoch)));
+  elements.nodes.replaceChildren(...nodes.map((node) => nodeRow(node, state.epoch)));
 }
 
 function bannerText(handover: HandoverState): string {

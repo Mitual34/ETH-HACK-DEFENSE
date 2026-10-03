@@ -17,6 +17,7 @@ export interface DashboardState {
   epoch: number;
   handover: HandoverState;
   log: readonly SwarmEvent[];
+  acceptedCount: number;
   malformedCount: number;
   /** Events older than the last one already seen from the same node. */
   staleCount: number;
@@ -29,6 +30,7 @@ export function initialState(): DashboardState {
     epoch: 0,
     handover: IDLE_HANDOVER,
     log: [],
+    acceptedCount: 0,
     malformedCount: 0,
     staleCount: 0,
     connection: "connecting",
@@ -65,6 +67,7 @@ export function applyEvent(
     epoch: Math.max(state.epoch, event.epoch),
     handover: applyHandoverEvent(state.handover, event, arrivedAt),
     log: appendBounded(state.log, event, maxLogRows),
+    acceptedCount: state.acceptedCount + 1,
     staleCount: state.staleCount + (isStale ? 1 : 0),
   };
 }

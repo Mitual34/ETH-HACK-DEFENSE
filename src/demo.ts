@@ -83,13 +83,24 @@ export class DemoSource implements SwarmEventSource, DemoControls {
 
   /** Queues the scene after whatever is already playing. Timestamps are ms since the demo started. */
   private play(script: ScriptedEvent[]): void {
-    const sceneStart = Math.max(this.elapsed(), this.busyUntil);
+    const now = this.elapsed();
+    const sceneStart = Math.max(now, this.busyUntil);
+    const batches = new Map<number, string[]>();
     for (const { offsetMs, event } of script) {
       const timestamp = sceneStart + offsetMs;
-      const packet = JSON.stringify({ timestamp, ...event });
-      this.after(timestamp - this.elapsed(), () => this.handlers?.onMessage(packet));
+      const batch = batches.get(timestamp) ?? [];
+      batch.push(JSON.stringify({ timestamp, ...event }));
+      batches.set(timestamp, batch);
       this.busyUntil = Math.max(this.busyUntil, timestamp);
     }
+    for (const [timestamp, packets] of batches) {
+      this.after(timestamp - now, () => this.emit(packets));
+    }
+  }
+
+  /** Events that share a timestamp leave on one timer, so a real timer cannot reorder them. */
+  private emit(packets: string[]): void {
+    for (const packet of packets) this.handlers?.onMessage(packet);
   }
 
   /** Timers remove themselves once fired, so the pending set stays bounded. */

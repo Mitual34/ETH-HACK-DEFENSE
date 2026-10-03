@@ -1,8 +1,43 @@
-/* Handover timer, node cards and event log. Tokens come from styles.css. */
+/* What goes inside panels: stats, tables, node rows, the handover banner, the log. */
+
+/* A stat panel is one large centred telemetry value. */
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-height: 132px;
+}
+
+.stat-value,
+.telemetry {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value {
+  margin: auto 0;
+  font-size: 2.6rem;
+  font-weight: var(--weight-body);
+  line-height: 1.1;
+  text-align: center;
+  color: var(--accent);
+}
+
+.alarm {
+  color: var(--alert);
+  font-weight: var(--weight-title);
+  text-align: center;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
 
 .banner {
   font-weight: var(--weight-title);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  text-align: center;
   color: var(--muted);
 }
 
@@ -12,7 +47,7 @@
 }
 
 .banner[data-status="complete"] {
-  color: var(--accent);
+  color: var(--text);
   animation: blink 800ms ease-in-out 1;
 }
 
@@ -35,41 +70,25 @@
   }
 }
 
-.timer {
-  font-family: var(--font-mono);
-  font-size: 3.5rem;
-  font-weight: var(--weight-body);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-
-.note {
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin-bottom: 12px;
-}
-
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
   font-weight: var(--weight-table);
 }
 
 th,
 td {
-  padding: 6px 10px;
+  padding: 7px 10px;
   text-align: left;
   border-bottom: 1px solid var(--line);
 }
 
 th {
-  color: var(--muted);
-  font-weight: var(--weight-title);
+  font-weight: var(--weight-body);
 }
 
-.stages {
-  max-width: 420px;
+tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .stage-value {
@@ -78,86 +97,54 @@ th {
   white-space: nowrap;
 }
 
-.nodes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--gap);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.node {
-  display: grid;
-  gap: 4px;
-  border-left: 4px solid var(--muted);
-}
-
+/* Node rows: the id reads as a link, the state carries the colour. */
 .node-id {
-  font-size: 1.3rem;
-  font-weight: var(--weight-title);
+  color: var(--successor);
+  font-weight: var(--weight-body);
 }
 
 .node-state,
-.node-epoch,
-.node-stale {
+.node-epoch {
   font-family: var(--font-mono);
 }
 
-.node-epoch,
-.node-stale {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.node-stale {
-  color: var(--successor);
-}
-
-/* A node still reporting an old epoch holds no authority, so it recedes. */
-.node[data-stale="true"] {
-  opacity: 0.5;
-}
-
-.node[data-state="LEAD"] {
-  border-left-color: var(--lead);
-}
-
-.node[data-state="SUCCESSOR"] {
-  border-left-color: var(--successor);
-}
-
-.node[data-state="FOLLOWER"] {
-  border-left-color: var(--ok);
-}
-
-.node[data-state="ISOLATED"] {
-  border-left-color: var(--alert);
-}
-
-.node[data-state="FENCED"],
-.node[data-state="YIELD"] {
-  border-left-color: var(--fenced);
-}
-
-.node[data-state="LEAD"] .node-state,
+.node-row[data-state="LEAD"] .node-state,
 .log tr[data-state="LEAD"] .log-state {
   color: var(--lead);
 }
 
+.node-row[data-state="SUCCESSOR"] .node-state {
+  color: var(--successor);
+}
+
+.node-row[data-state="FOLLOWER"] .node-state {
+  color: var(--ok);
+}
+
+.node-row[data-state="ISOLATED"] .node-state {
+  color: var(--alert);
+}
+
+.node-row[data-state="FENCED"] .node-state,
+.node-row[data-state="YIELD"] .node-state {
+  color: var(--fenced);
+}
+
+/* A node still reporting an old epoch holds no authority, so it recedes. */
+.node-row[data-stale="true"] {
+  opacity: 0.5;
+}
+
 .log-scroll {
-  max-height: 420px;
+  max-height: 360px;
   overflow: auto;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
 }
 
 /* The event log is monospaced throughout, headers included. */
 .log,
 .log th {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .log th {
