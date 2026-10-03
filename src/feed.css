@@ -50,14 +50,23 @@
   font-family: var(--font-mono);
 }
 
+/* Which drone the pilot is seeing: large enough to read from the back of a room. */
 .feed-badge {
-  top: 12px;
-  left: 12px;
-  padding: 2px 10px;
-  background: rgb(0 0 0 / 60%);
-  border-left: 3px solid var(--accent);
+  top: 14px;
+  left: 14px;
+  padding: 6px 18px;
+  background: rgb(0 0 0 / 78%);
+  border-left: 6px solid var(--accent);
   color: var(--accent);
-  font-size: 1.2rem;
+  font-family: var(--font-ui);
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  font-weight: var(--weight-wordmark);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.feed-badge:empty {
+  display: none;
 }
 
 .feed-badge.pulse {
@@ -65,12 +74,17 @@
 }
 
 .feed-source {
-  bottom: 10px;
-  left: 12px;
-  font-size: 0.75rem;
+  bottom: 12px;
+  left: 14px;
+  padding: 2px 8px;
+  background: rgb(0 0 0 / 70%);
+  font-size: 0.8rem;
   letter-spacing: 0.08em;
   color: var(--text);
-  text-shadow: 0 0 4px #000;
+}
+
+.feed-source:empty {
+  display: none;
 }
 
 .feed-lost {

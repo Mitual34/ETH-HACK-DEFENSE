@@ -142,6 +142,38 @@ describe("DemoSource controls", () => {
     expect(state.handover.completedCount).toBe(2);
   });
 
+  it("with a lead pool of two, the lead alternates between D1 and D2 while the rest follow", () => {
+    const leads: string[] = [];
+    const state = observe((source) => {
+      source.setLeadPool(2);
+      for (let press = 0; press < 3; press += 1) source.loseLead();
+    });
+    leads.push(...leadsAtCurrentEpoch(state));
+    expect(leads).toEqual(["D2"]);
+    expect(state.epoch).toBe(4);
+    expect(state.nodes.get("D3")?.state).toBe("FOLLOWER");
+  });
+
+  it("a second DESTROY does not wait for the old lead's rejoin delay", () => {
+    const timeline = new FakeTimeline();
+    const source = new DemoSource(5, timeline, timeline);
+    const feedLossAt: number[] = [];
+    source.start({
+      onStatus: () => undefined,
+      onMessage: (text) => {
+        const parsed = parseSwarmEvent(text, LIMITS)!;
+        if (parsed.event === "FEED_LOSS") feedLossAt.push(timeline.now());
+      },
+    });
+    timeline.advance(SETTLE_MS);
+    source.loseLead();
+    timeline.advance(SETTLE_MS);
+    const pressedAt = timeline.now();
+    source.loseLead();
+    timeline.advance(SETTLE_MS);
+    expect(feedLossAt[1]).toBe(pressedAt);
+  });
+
   it("ignores a restore when no lead is down", () => {
     const state = observe((source) => source.restoreLead());
     expect(state.epoch).toBe(1);

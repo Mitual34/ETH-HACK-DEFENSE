@@ -14,6 +14,8 @@ import type { SwitchResult, SwitchTimer } from "./switchTimer";
 const MS_DIGITS = 1;
 const LOST_TEXT = "FEED LOST";
 const PULSE_CLASS = "pulse";
+const LIVE_TEXT = "LIVE CAMERA";
+const NO_CAMERA_TEXT = "NO CAMERA";
 
 function formatMs(ms: number): string {
   return `${ms.toFixed(MS_DIGITS)} ms`;
@@ -23,7 +25,7 @@ function createSurface(slot: FeedSlot): HTMLElement {
   if (slot.stream === null) {
     const placeholder = document.createElement("div");
     placeholder.className = "feed-surface feed-placeholder";
-    placeholder.textContent = slot.label;
+    placeholder.textContent = NO_CAMERA_TEXT;
     return placeholder;
   }
   const video = document.createElement("video");
@@ -91,23 +93,29 @@ export class FeedView {
   }
 
   private showLead(lead: string): void {
-    const { feedBadge, feedLost } = this.elements;
-    feedBadge.textContent = lead;
-    feedLost.hidden = true;
-    const surface = this.activate();
+    this.elements.feedLost.hidden = true;
+    const surface = this.activate(lead);
     this.timer.command();
     if (surface === undefined) this.report(this.timer.finish());
     else this.waitForFrame(surface, () => this.report(this.timer.finish()));
   }
 
-  /** Shows the surface for the current lead, or none while the feed is lost. */
-  private activate(): HTMLElement | undefined {
+  /**
+   * Shows the surface for the current lead, or none while the feed is lost.
+   * The badge names the drone the feed stands in for; a lead with no feed of
+   * its own keeps its node id, so the label never claims the wrong drone.
+   */
+  private activate(lead: string | null = this.shownLead): HTMLElement | undefined {
     const count = this.surfaces.length;
-    const index = this.shownLead === null || count === 0 ? -1 : this.shownPosition % count;
+    const index = lead === null || count === 0 ? -1 : this.shownPosition % count;
+    const slot = this.slots[index];
+    const ownFeed = this.shownPosition < count;
     this.surfaces.forEach((surface, position) => {
       surface.dataset["active"] = String(position === index);
     });
-    this.elements.feedSource.textContent = this.slots[index]?.label ?? "";
+    this.elements.feedBadge.textContent = slot !== undefined && ownFeed ? slot.label : (lead ?? "");
+    this.elements.feedSource.textContent =
+      slot === undefined ? "" : slot.stream === null ? NO_CAMERA_TEXT : LIVE_TEXT;
     return this.surfaces[index];
   }
 

@@ -16,8 +16,8 @@ afterEach(() => {
 });
 
 const PLACEHOLDERS = [
-  { label: "CAMERA 1", stream: null },
-  { label: "CAMERA 2", stream: null },
+  { label: "DRONE 1", stream: null },
+  { label: "DRONE 2", stream: null },
 ];
 
 interface Harness {
@@ -45,9 +45,12 @@ function startFeed(): Harness {
   return { timeline, elements, feed, observe, presentFrame: () => pending.shift()?.() };
 }
 
-function activeLabels(elements: DashboardElements): (string | null)[] {
-  const active = elements.feedScreen.querySelectorAll('[data-active="true"]');
-  return Array.from(active).map((surface) => surface.textContent);
+/** Which feed surfaces are visible, by position: [0] means only the first camera. */
+function activeFeeds(elements: DashboardElements): number[] {
+  const surfaces = Array.from(elements.feedScreen.querySelectorAll(".feed-surface"));
+  return surfaces.flatMap((surface, index) =>
+    surface.getAttribute("data-active") === "true" ? [index] : [],
+  );
 }
 
 function bootTwoNodes({ observe, presentFrame }: Harness): void {
@@ -60,8 +63,9 @@ describe("FeedView", () => {
   it("shows the camera of the lead and reports no switch time before anything is destroyed", () => {
     const harness = startFeed();
     bootTwoNodes(harness);
-    expect(activeLabels(harness.elements)).toEqual(["CAMERA 1"]);
-    expect(harness.elements.feedBadge.textContent).toBe("D1");
+    expect(activeFeeds(harness.elements)).toEqual([0]);
+    expect(harness.elements.feedBadge.textContent).toBe("DRONE 1");
+    expect(harness.elements.feedSource.textContent).toBe("NO CAMERA");
     expect(harness.elements.switchTime.textContent).toBe("");
   });
 
@@ -70,22 +74,22 @@ describe("FeedView", () => {
     const { timeline, elements, feed, observe, presentFrame } = harness;
     bootTwoNodes(harness);
     feed.noteDestroyPressed();
-    expect(activeLabels(elements)).toEqual(["CAMERA 1"]);
+    expect(activeFeeds(elements)).toEqual([0]);
     timeline.advance(5);
     observe({ timestamp: 100, node_id: "D1", epoch: 1, state: "LEAD", event: "FEED_LOSS" });
-    expect(activeLabels(elements)).toEqual([]);
+    expect(activeFeeds(elements)).toEqual([]);
     expect(elements.feedLost.hidden).toBe(false);
     expect(elements.destroy.hasAttribute("disabled")).toBe(true);
     timeline.advance(400);
     observe({ timestamp: 500, node_id: "D2", epoch: 2, state: "LEAD", event: "LEASE_ACQUIRED" });
-    expect(activeLabels(elements)).toEqual([]);
+    expect(activeFeeds(elements)).toEqual([]);
     observe({ timestamp: 550, node_id: "D2", epoch: 2, state: "LEAD", event: "FEED_DETECTED" });
-    expect(activeLabels(elements)).toEqual(["CAMERA 2"]);
+    expect(activeFeeds(elements)).toEqual([1]);
     timeline.advance(12.5);
     presentFrame();
     expect(elements.switchTime.textContent).toBe("417.5 ms");
     expect(elements.switchNote.textContent).toBe("decision 405.0 ms + picture 12.5 ms");
-    expect(elements.feedBadge.textContent).toBe("D2");
+    expect(elements.feedBadge.textContent).toBe("DRONE 2");
     expect(elements.destroy.hasAttribute("disabled")).toBe(false);
   });
 
@@ -118,7 +122,7 @@ describe("openCameraSlots", () => {
       },
     };
     const slots = await openCameraSlots(devices, DEFAULT_CONFIG);
-    expect(slots.map((slot) => slot.label)).toEqual(["CAMERA 1", "NO CAMERA 2"]);
+    expect(slots.map((slot) => slot.label)).toEqual(["DRONE 1", "DRONE 2"]);
     expect(slots.map((slot) => slot.stream !== null)).toEqual([true, false]);
   });
 
@@ -129,7 +133,7 @@ describe("openCameraSlots", () => {
         throw new Error("NotAllowedError");
       },
     };
-    const expected = ["NO CAMERA 1", "NO CAMERA 2"];
+    const expected = ["DRONE 1", "DRONE 2"];
     expect((await openCameraSlots(refused, DEFAULT_CONFIG)).map((slot) => slot.label)).toEqual(expected);
     expect((await openCameraSlots(undefined, DEFAULT_CONFIG)).map((slot) => slot.label)).toEqual(expected);
   });

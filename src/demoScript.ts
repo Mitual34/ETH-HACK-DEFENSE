@@ -80,12 +80,16 @@ function takeoverSteps(lead: number, successor: number, epoch: number): Scripted
   ];
 }
 
-/** The lead of this cycle is lost and the successor takes over at epoch + 1. */
-export function buildHandoverScript(nodeCount: number, cycle: number): ScriptedEvent[] {
+/**
+ * The lead of this cycle is lost and the successor takes over at epoch + 1.
+ * The lead rotates through the first leadPool nodes only, so with two cameras
+ * the lead alternates between drone 1 and drone 2 while the rest follow.
+ */
+export function buildHandoverScript(nodeCount: number, cycle: number, leadPool: number): ScriptedEvent[] {
   const epoch = FIRST_EPOCH + cycle;
-  const lead = cycle % nodeCount;
-  const successor = (cycle + 1) % nodeCount;
-  const nextSuccessor = (cycle + 2) % nodeCount;
+  const lead = cycle % leadPool;
+  const successor = (cycle + 1) % leadPool;
+  const nextSuccessor = (cycle + 2) % leadPool;
   const script = takeoverSteps(lead, successor, epoch);
   const settled = (script.at(-1)?.offsetMs ?? 0) + DEMO_TIMING.settleMs;
   for (let node = 0; node < nodeCount; node += 1) {
@@ -96,14 +100,21 @@ export function buildHandoverScript(nodeCount: number, cycle: number): ScriptedE
   return script;
 }
 
-/** The lead lost in this cycle returns, is fenced by the higher epoch, and rejoins. */
-export function buildRejoinScript(nodeCount: number, cycle: number): ScriptedEvent[] {
+/**
+ * The lead lost in this cycle returns, is fenced by the higher epoch, and rejoins
+ * after rejoinAfterMs. Zero makes it rejoin at once.
+ */
+export function buildRejoinScript(
+  cycle: number,
+  leadPool: number,
+  rejoinAfterMs: number,
+): ScriptedEvent[] {
   const epoch = FIRST_EPOCH + cycle;
-  const lead = cycle % nodeCount;
-  const role = (cycle + 2) % nodeCount === lead ? "SUCCESSOR" : "FOLLOWER";
+  const lead = cycle % leadPool;
+  const role = (cycle + 2) % leadPool === lead ? "SUCCESSOR" : "FOLLOWER";
   const fenced = "higher epoch seen; stays silent";
   return [
     scripted(0, lead, epoch, "FENCED", "STATE_CHANGE", fenced),
-    scripted(DEMO_TIMING.rejoinAfterMs, lead, epoch + 1, role, "STATE_CHANGE", "rejoined"),
+    scripted(rejoinAfterMs, lead, epoch + 1, role, "STATE_CHANGE", "rejoined"),
   ];
 }

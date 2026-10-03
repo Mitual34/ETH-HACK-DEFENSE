@@ -9,6 +9,7 @@
 import { logWarning } from "./log";
 
 export interface FeedSlot {
+  /** The drone this feed stands in for, shown large on the pilot screen. */
   label: string;
   /** Null for a placeholder shown when no camera is available for the slot. */
   stream: MediaStream | null;
@@ -53,11 +54,16 @@ async function openCamera(
   }
 }
 
+/** Camera 1 is DRONE 1, camera 2 is DRONE 2, and so on. */
+function droneLabel(index: number): string {
+  return `DRONE ${index + 1}`;
+}
+
 /** Fills up to minFeeds with placeholders, so a switch can be shown with no cameras. */
 export function padSlots(slots: FeedSlot[], minFeeds: number): FeedSlot[] {
   const padded = [...slots];
   while (padded.length < minFeeds) {
-    padded.push({ label: `NO CAMERA ${padded.length + 1}`, stream: null });
+    padded.push({ label: droneLabel(padded.length), stream: null });
   }
   return padded;
 }
@@ -75,7 +81,7 @@ export async function openCameraSlots(
     const ids = (await listCameraIds(devices)).slice(0, limits.maxFeeds);
     for (const deviceId of ids) {
       const stream = await openCamera(devices, deviceId, limits);
-      if (stream !== null) slots.push({ label: `CAMERA ${slots.length + 1}`, stream });
+      if (stream !== null) slots.push({ label: droneLabel(slots.length), stream });
     }
   } catch (error) {
     logWarning("cameras_unavailable", String(error));

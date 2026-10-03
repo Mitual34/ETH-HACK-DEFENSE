@@ -21,6 +21,9 @@ export interface DemoControls {
   freeRun(): void;
 }
 
+const MIN_LEAD_POOL = 2;
+const IMMEDIATELY = 0;
+
 export class DemoSource implements SwarmEventSource, DemoControls {
   private handlers: SourceHandlers | null = null;
   private readonly cancels = new Set<Cancel>();
@@ -29,12 +32,24 @@ export class DemoSource implements SwarmEventSource, DemoControls {
   private handoverCount = 0;
   private leadIsDown = false;
   private freeRunning = false;
+  private leadPool: number;
 
   constructor(
     private readonly nodeCount: number,
     private readonly clock: Clock,
     private readonly scheduler: Scheduler,
-  ) {}
+  ) {
+    this.leadPool = nodeCount;
+  }
+
+  /**
+   * Limits which nodes take turns as lead, normally to the nodes that have a
+   * feed. Ignored once a handover has happened, so the rotation never jumps.
+   */
+  setLeadPool(size: number): void {
+    if (this.handoverCount > 0) return;
+    this.leadPool = Math.min(Math.max(size, MIN_LEAD_POOL), this.nodeCount);
+  }
 
   start(handlers: SourceHandlers): void {
     this.handlers = handlers;
@@ -49,18 +64,25 @@ export class DemoSource implements SwarmEventSource, DemoControls {
     this.cancels.clear();
   }
 
-  /** If the previous lead is still down it is restored first, so a node is always free to take over. */
+  /**
+   * If the previous lead is still down it rejoins at once, so a node is free to
+   * take over and the wait is not counted in the switch being timed.
+   */
   loseLead(): void {
     if (this.handlers === null) return;
-    this.restoreLead();
-    this.play(buildHandoverScript(this.nodeCount, this.handoverCount));
+    this.rejoin(IMMEDIATELY);
+    this.play(buildHandoverScript(this.nodeCount, this.handoverCount, this.leadPool));
     this.handoverCount += 1;
     this.leadIsDown = true;
   }
 
   restoreLead(): void {
+    this.rejoin(DEMO_TIMING.rejoinAfterMs);
+  }
+
+  private rejoin(afterMs: number): void {
     if (this.handlers === null || !this.leadIsDown) return;
-    this.play(buildRejoinScript(this.nodeCount, this.handoverCount - 1));
+    this.play(buildRejoinScript(this.handoverCount - 1, this.leadPool, afterMs));
     this.leadIsDown = false;
   }
 

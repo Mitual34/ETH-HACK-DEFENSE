@@ -1,7 +1,7 @@
 /** Browser entry point: builds the real clock, scheduler, cameras and source, then starts the app. */
 
 import { DashboardApp } from "./app";
-import { openCameraSlots, padSlots } from "./cameras";
+import { openCameraSlots, padSlots, type FeedSlot } from "./cameras";
 import { ChartsView } from "./chartsView";
 import { BrowserClock, BrowserScheduler, type Clock, type Scheduler } from "./clock";
 import { loadConfig, type DashboardConfig } from "./config";
@@ -24,13 +24,20 @@ interface Runtime {
   elements: DashboardElements;
 }
 
-/** Starts with placeholders so the screen works at once, then swaps in the cameras. */
-function createFeed(runtime: Runtime): FeedView {
+/**
+ * Starts with placeholders so the screen works at once, then swaps in the cameras.
+ * onFeeds is told how many feeds there are, each time that is known.
+ */
+function createFeed(runtime: Runtime, onFeeds: (count: number) => void): FeedView {
   const { config, clock, scheduler, elements } = runtime;
   const waitForFrame = createFrameWaiter(scheduler, config.frameTimeoutMs);
   const feed = new FeedView(elements, new SwitchTimer(clock), waitForFrame);
-  feed.setSlots(padSlots([], config.minFeeds));
-  void openCameraSlots(navigator.mediaDevices, config).then((slots) => feed.setSlots(slots));
+  const useSlots = (slots: FeedSlot[]): void => {
+    feed.setSlots(slots);
+    onFeeds(slots.length);
+  };
+  useSlots(padSlots([], config.minFeeds));
+  void openCameraSlots(navigator.mediaDevices, config).then(useSlots);
   return feed;
 }
 
@@ -44,18 +51,23 @@ function createObserver(runtime: Runtime, feed: FeedView): (state: DashboardStat
 }
 
 /** A live relay: every panel at once, no guide, and no DESTROY because the dashboard cannot send. */
-function startLive(runtime: Runtime, feed: FeedView): void {
+function startLive(runtime: Runtime): void {
   const { config, scheduler, elements } = runtime;
+  const feed = createFeed(runtime, () => undefined);
   const { websocketUrl, reconnectDelayMs } = config;
   const source = new WebSocketSource(websocketUrl, reconnectDelayMs, scheduler, openBrowserSocket);
   elements.destroy.hidden = true;
   new DashboardApp({ ...runtime, source, onState: createObserver(runtime, feed) }).start();
 }
 
-/** The demo: DESTROY loses the scripted lead, and the guide walks through what happens. */
-function startDemo(runtime: Runtime, feed: FeedView): void {
+/**
+ * The demo: DESTROY loses the scripted lead, and the guide walks through what happens.
+ * Only drones that have a feed take turns as lead, so the screen always shows its own drone.
+ */
+function startDemo(runtime: Runtime): void {
   const { config, clock, scheduler, elements } = runtime;
   const source = new DemoSource(config.demoNodeCount, clock, scheduler);
+  const feed = createFeed(runtime, (count) => source.setLeadPool(count));
   const screen = {
     panels: findPanels(document),
     anchors: findAnchors(document),
@@ -78,9 +90,8 @@ function main(): void {
     scheduler: new BrowserScheduler(),
     elements: findElements(document),
   };
-  const feed = createFeed(runtime);
-  if (runtime.config.source === "websocket") startLive(runtime, feed);
-  else startDemo(runtime, feed);
+  if (runtime.config.source === "websocket") startLive(runtime);
+  else startDemo(runtime);
 }
 
 try {
