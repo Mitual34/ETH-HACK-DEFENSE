@@ -30,6 +30,10 @@
   gap: var(--gap);
 }
 
+.wall {
+  margin-top: var(--gap);
+}
+
 .w4 {
   grid-column: span 4;
 }

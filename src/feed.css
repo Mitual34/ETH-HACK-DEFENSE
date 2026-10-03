@@ -1,15 +1,61 @@
-/* The feed wall, the DESTROY button and the switch time. */
-
-:root {
-  /* The one deliberately loud colour on the page. */
-  --destroy: #e60023;
-  --destroy-deep: #8f0016;
-}
+/* The pilot screen and the feed wall. */
 
 .feed {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
   gap: var(--gap);
+}
+
+/* One large picture: whichever drone is live. */
+.pilot-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+/* Every camera keeps running underneath; only the live drone's is visible. */
+.pilot-screen .feed-surface {
+  opacity: 0;
+}
+
+.pilot-screen .feed-surface[data-active="true"] {
+  opacity: 1;
+}
+
+.pilot-badge,
+.pilot-lost {
+  position: absolute;
+}
+
+.pilot-badge {
+  top: 14px;
+  left: 14px;
+  padding: 6px 18px;
+  background: rgb(0 0 0 / 78%);
+  border-left: 6px solid var(--accent);
+  color: var(--accent);
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  font-weight: var(--weight-wordmark);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.pilot-badge:empty {
+  display: none;
+}
+
+.pilot-lost {
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+  color: var(--alert);
+  font-weight: var(--weight-title);
+  font-size: 1.4rem;
+  letter-spacing: 0.2em;
 }
 
 /* Every drone's feed at once, as many per row as fit. */
@@ -34,12 +80,14 @@
   box-shadow: 0 0 18px rgb(255 176 32 / 35%);
 }
 
-.feed-tile[data-lost="true"] {
+/* A failed drone stops: frozen, greyed and framed in the alert colour. */
+.feed-tile[data-stopped="true"] {
   border-color: var(--alert);
 }
 
-.feed-tile[data-lost="true"] .feed-surface {
-  opacity: 0.15;
+.feed-tile[data-stopped="true"] .feed-surface {
+  opacity: 0.25;
+  filter: grayscale(1);
 }
 
 .feed-surface {
@@ -104,67 +152,10 @@
   animation: blink 800ms ease-in-out 1;
 }
 
-.feed-tile[data-lost="true"] .feed-tile-status {
+.feed-tile[data-stopped="true"] .feed-tile-status {
   background: var(--alert);
   color: var(--bg);
   font-weight: var(--weight-title);
-}
-
-.feed-side {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
-}
-
-.feed-side > h2 {
-  align-self: flex-start;
-}
-
-/* The switch time is white so the only loud colour here is the button. */
-.feed-side .stat-value {
-  margin: 0;
-  color: var(--text);
-}
-
-.destroy {
-  width: min(100%, 260px);
-  aspect-ratio: 1;
-  padding: 0;
-  border: 6px solid var(--destroy-deep);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff4d5e, var(--destroy) 55%, var(--destroy-deep));
-  box-shadow:
-    0 12px 0 var(--destroy-deep),
-    0 18px 30px rgb(230 0 35 / 35%);
-  color: #fff;
-  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
-  font-weight: var(--weight-wordmark);
-  letter-spacing: 0.06em;
-  margin: auto 0 22px;
-}
-
-.destroy:hover:not([disabled]) {
-  border-color: var(--destroy-deep);
-  filter: brightness(1.1);
-}
-
-.destroy:active:not([disabled]) {
-  transform: translateY(8px);
-  box-shadow:
-    0 4px 0 var(--destroy-deep),
-    0 8px 16px rgb(230 0 35 / 35%);
-}
-
-.destroy[disabled] {
-  opacity: 0.55;
-}
-
-.switch-note {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 
 @media (max-width: 640px) {

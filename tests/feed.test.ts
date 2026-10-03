@@ -4,6 +4,8 @@ import { DEFAULT_CONFIG } from "../src/config";
 import type { DashboardElements } from "../src/dom";
 import { FakeTimeline } from "../src/fakes";
 import { FeedView } from "../src/feedView";
+import { FeedWall } from "../src/feedWall";
+import { PilotScreen } from "../src/pilotScreen";
 import { applyEvent, initialState, type DashboardState } from "../src/store";
 import { SwitchTimer } from "../src/switchTimer";
 import { event, mountShell } from "./helpers";
@@ -33,8 +35,12 @@ function startFeed(): Harness {
   const timeline = new FakeTimeline();
   const elements = mountShell();
   const pending: (() => void)[] = [];
-  const feed = new FeedView(elements, new SwitchTimer(timeline), (_surface, done) => {
-    pending.push(done);
+  const feed = new FeedView({
+    elements,
+    pilot: new PilotScreen(elements),
+    wall: new FeedWall(elements),
+    timer: new SwitchTimer(timeline),
+    waitForFrame: (_surface, done) => pending.push(done),
   });
   feed.setSlots(PLACEHOLDERS);
   let state: DashboardState = initialState();
@@ -45,7 +51,7 @@ function startFeed(): Harness {
   return { timeline, elements, feed, observe, presentFrame: () => pending.shift()?.() };
 }
 
-/** The status shown on each tile, in drone order. Every tile is always on screen. */
+/** The status shown on each tile of the wall, in drone order. Every tile is always on screen. */
 function tileStatuses(elements: DashboardElements): (string | null)[] {
   const statuses = elements.feedScreen.querySelectorAll(".feed-tile-status");
   return Array.from(statuses).map((status) => status.textContent);
@@ -57,37 +63,60 @@ function bootTwoNodes({ observe, presentFrame }: Harness): void {
   presentFrame();
 }
 
+function failLead({ timeline, observe, presentFrame }: Harness): void {
+  observe({ timestamp: 100, node_id: "D1", epoch: 1, state: "LEAD", event: "FEED_LOSS" });
+  timeline.advance(400);
+  observe({ timestamp: 500, node_id: "D2", epoch: 2, state: "LEAD", event: "LEASE_ACQUIRED" });
+  observe({ timestamp: 550, node_id: "D2", epoch: 2, state: "LEAD", event: "FEED_DETECTED" });
+  timeline.advance(12.5);
+  presentFrame();
+}
+
 describe("FeedView", () => {
-  it("shows every drone at once, marks the lead as the pilot view and says which have no camera", () => {
+  it("shows every drone at once, the lead on the pilot screen, and says which have no camera", () => {
     const harness = startFeed();
     bootTwoNodes(harness);
-    const { feedScreen } = harness.elements;
-    expect(tileStatuses(harness.elements)).toEqual(["PILOT VIEW", "NOT AVAILABLE"]);
+    const { feedScreen, pilotBadge, pilotLost, switchTime } = harness.elements;
+    expect(tileStatuses(harness.elements)).toEqual(["LIVE", "NOT AVAILABLE"]);
     expect(feedScreen.querySelector(".feed-tile-label")?.textContent).toBe("DRONE 1");
     expect(feedScreen.querySelector(".feed-placeholder")?.textContent).toBe("CAMERA NOT AVAILABLE");
-    expect(harness.elements.switchTime.textContent).toBe("");
+    expect(pilotBadge.textContent).toBe("DRONE 1");
+    expect(pilotLost.hidden).toBe(true);
+    expect(switchTime.textContent).toBe("");
   });
 
-  it("switches camera 1 to camera 2 only when the system names the new lead, and times it in ms", () => {
+  it("stops the failed drone, moves the pilot screen to the next one by itself, and times it in ms", () => {
     const harness = startFeed();
-    const { timeline, elements, feed, observe, presentFrame } = harness;
+    const { timeline, elements, feed, observe } = harness;
     bootTwoNodes(harness);
     feed.noteDestroyPressed();
-    expect(tileStatuses(elements)).toEqual(["PILOT VIEW", "NOT AVAILABLE"]);
     timeline.advance(5);
     observe({ timestamp: 100, node_id: "D1", epoch: 1, state: "LEAD", event: "FEED_LOSS" });
-    expect(tileStatuses(elements)).toEqual(["FEED LOST", "NOT AVAILABLE"]);
+    expect(tileStatuses(elements)).toEqual(["STOPPED", "NOT AVAILABLE"]);
+    expect(elements.pilotLost.hidden).toBe(false);
     expect(elements.destroy.hasAttribute("disabled")).toBe(true);
     timeline.advance(400);
     observe({ timestamp: 500, node_id: "D2", epoch: 2, state: "LEAD", event: "LEASE_ACQUIRED" });
-    expect(tileStatuses(elements)).toEqual(["FEED LOST", "NOT AVAILABLE"]);
+    expect(elements.pilotLost.hidden).toBe(false);
     observe({ timestamp: 550, node_id: "D2", epoch: 2, state: "LEAD", event: "FEED_DETECTED" });
-    expect(tileStatuses(elements)).toEqual(["NOT AVAILABLE", "PILOT VIEW"]);
+    expect(elements.pilotBadge.textContent).toBe("DRONE 2");
+    expect(elements.pilotLost.hidden).toBe(true);
     timeline.advance(12.5);
-    presentFrame();
+    harness.presentFrame();
+    expect(tileStatuses(elements)).toEqual(["STOPPED", "LIVE"]);
     expect(elements.switchTime.textContent).toBe("417.5 ms");
     expect(elements.switchNote.textContent).toBe("decision 405.0 ms + picture 12.5 ms");
     expect(elements.destroy.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("keeps the failed drone stopped until it rejoins at the current epoch", () => {
+    const harness = startFeed();
+    bootTwoNodes(harness);
+    failLead(harness);
+    harness.observe({ timestamp: 900, node_id: "D1", epoch: 1, state: "FENCED" });
+    expect(tileStatuses(harness.elements)).toEqual(["STOPPED", "LIVE"]);
+    harness.observe({ timestamp: 950, node_id: "D1", epoch: 2, state: "FOLLOWER" });
+    expect(tileStatuses(harness.elements)).toEqual(["NOT AVAILABLE", "LIVE"]);
   });
 
   it("times from the feed loss when nobody pressed DESTROY", () => {

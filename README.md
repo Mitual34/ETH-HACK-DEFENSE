@@ -18,30 +18,29 @@ npm install
 npm run dev
 ```
 
-With no settings it opens a guided demo: seven questions, each answered from first
-principles in a sentence or two, each showing only the panels it talks about. The
-guide is a short text-message thread that moves next to the panel it explains. Two
-steps ask the viewer to press a button (lose the lead, bring it back). "Skip the
-guide" or the last step reveals every panel and loops the scenario. The steps live
-in `src/guideSteps.ts`.
+With no settings it runs a scripted demo swarm in the browser, which you drive with
+the DESTROY button.
 
 ## Cameras and the DESTROY button
 
 Plug in two or more USB cameras and allow camera access when the browser asks.
-Every drone has a tile on the feed wall, all visible at once and each named in
+There are two views. The **pilot view** is one large picture that always shows
+the live drone. The **drone feeds** wall shows every drone at once, each named in
 large letters. Camera 1 is DRONE 1, camera 2 is DRONE 2, and so on. A drone with
 no camera says CAMERA NOT AVAILABLE. Each tile carries a status:
 
-- **PILOT VIEW**: the lead, framed in amber. This is what the pilot sees.
+- **LIVE**: the lead, framed in amber. This is the drone on the pilot view.
 - **STANDBY**: a working camera that is not the lead.
 - **NOT AVAILABLE**: no camera for this drone.
-- **FEED LOST**: the lead that was just destroyed, until the next one takes over.
+- **STOPPED**: a failed drone. Its picture freezes and greys out, and it stays
+  stopped until it is restored.
 
 In the demo only drones with a working camera take turns as lead, so with two
 cameras the lead alternates between DRONE 1 and DRONE 2 and the rest follow.
 
-Press **DESTROY** to lose the lead. Its tile goes to FEED LOST, the handover
-runs, and when the new lead is named the pilot view moves to its tile. The
+Press **DESTROY** to fail the live drone. Its tile stops, the handover runs, and
+when the new lead is named the pilot view moves to that drone on its own. Press
+**Restore failed drone** to bring the stopped drone back as a follower. The
 switch time is shown in milliseconds, split in two:
 
 - **decision**: from the press until the system names the new lead. In demo mode
@@ -54,8 +53,8 @@ If access is refused every tile says CAMERA NOT AVAILABLE and everything else
 still works. If two USB cameras will not open together, lower
 `VITE_TALOS_FEED_WIDTH` and `VITE_TALOS_FEED_HEIGHT`.
 
-Camera access needs `localhost` or HTTPS. With a live relay the DESTROY button is
-hidden, because the dashboard cannot send anything to the swarm.
+Camera access needs `localhost` or HTTPS. With a live relay the DESTROY and restore
+buttons are hidden, because the dashboard cannot send anything to the swarm.
 
 To read a real ground relay, copy `.env.example` to `.env` and set:
 
@@ -115,9 +114,10 @@ src/handover.ts     handover timer (pure functions)
 src/store.ts        observed state (pure functions)
 src/transport.ts    event source interface + WebSocket source
 src/demo*.ts        scripted demo source and its controls
-src/guide*.ts       guided demo: steps and the thread that walks through them
 src/cameras.ts      opens the USB cameras as feed slots
-src/feedView.ts     feed wall: follows the lead, never picks the feed
+src/feedView.ts     keeps the pilot screen and feed wall in step with the lead
+src/pilotScreen.ts  the large picture of the live drone
+src/feedWall.ts     one tile per drone; a failed drone stops
 src/switchTimer.ts  times a feed switch in milliseconds
 src/frames.ts       detects the first frame of a switched feed
 src/clock.ts        clock and scheduler interfaces
@@ -125,7 +125,7 @@ src/fakes.ts        fakes of every interface, for tests
 src/render.ts       DOM rendering (textContent only)
 src/fonts.ts        self-hosted Inter and IBM Plex Mono
 src/charts*.ts      pies, sparklines and the handover history
-src/*.css           theme tokens (styles), panel grid (layout), panels, charts, guide, feed
+src/*.css           theme tokens (styles), panel grid (layout), panels, charts, feed, controls
 src/app.ts          wiring
 tests/              vitest suites
 ```

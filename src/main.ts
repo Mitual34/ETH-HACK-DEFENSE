@@ -6,13 +6,13 @@ import { ChartsView } from "./chartsView";
 import { BrowserClock, BrowserScheduler, type Clock, type Scheduler } from "./clock";
 import { loadConfig, type DashboardConfig } from "./config";
 import { DemoSource } from "./demo";
-import { findAnchors, findElements, findPanels, findRows, type DashboardElements } from "./dom";
+import { findElements, type DashboardElements } from "./dom";
 import { FeedView } from "./feedView";
+import { FeedWall } from "./feedWall";
 import "./fonts";
 import { createFrameWaiter } from "./frames";
-import { Guide } from "./guide";
-import { GUIDE_STEPS } from "./guideSteps";
 import { logWarning } from "./log";
+import { PilotScreen } from "./pilotScreen";
 import type { DashboardState } from "./store";
 import { SwitchTimer } from "./switchTimer";
 import { openBrowserSocket, WebSocketSource } from "./transport";
@@ -31,8 +31,13 @@ interface Runtime {
  */
 function createFeed(runtime: Runtime, tiles: number, onCameras: (count: number) => void): FeedView {
   const { config, clock, scheduler, elements } = runtime;
-  const waitForFrame = createFrameWaiter(scheduler, config.frameTimeoutMs);
-  const feed = new FeedView(elements, new SwitchTimer(clock), waitForFrame);
+  const feed = new FeedView({
+    elements,
+    pilot: new PilotScreen(elements),
+    wall: new FeedWall(elements),
+    timer: new SwitchTimer(clock),
+    waitForFrame: createFrameWaiter(scheduler, config.frameTimeoutMs),
+  });
   const useSlots = (slots: FeedSlot[]): void => {
     feed.setSlots(padSlots(slots, tiles));
     onCameras(slots.filter((slot) => slot.stream !== null).length);
@@ -51,18 +56,18 @@ function createObserver(runtime: Runtime, feed: FeedView): (state: DashboardStat
   };
 }
 
-/** A live relay: every panel at once, no guide, and no DESTROY because the dashboard cannot send. */
+/** A live relay: no demo controls, because the dashboard cannot send anything to the swarm. */
 function startLive(runtime: Runtime): void {
   const { config, scheduler, elements } = runtime;
-  const feed = createFeed(runtime, config.minFeeds, () => undefined);
   const { websocketUrl, reconnectDelayMs } = config;
+  const feed = createFeed(runtime, config.minFeeds, () => undefined);
   const source = new WebSocketSource(websocketUrl, reconnectDelayMs, scheduler, openBrowserSocket);
-  elements.destroy.hidden = true;
+  elements.demoControls.hidden = true;
   new DashboardApp({ ...runtime, source, onState: createObserver(runtime, feed) }).start();
 }
 
 /**
- * The demo: DESTROY loses the scripted lead, and the guide walks through what happens.
+ * The demo: DESTROY fails the scripted lead and RESTORE brings the failed drone back.
  * Every drone has a tile; only drones with a working camera take turns as lead.
  */
 function startDemo(runtime: Runtime): void {
@@ -70,19 +75,12 @@ function startDemo(runtime: Runtime): void {
   const source = new DemoSource(config.demoNodeCount, clock, scheduler);
   const tiles = Math.max(config.minFeeds, config.demoNodeCount);
   const feed = createFeed(runtime, tiles, (cameras) => source.setLeadPool(cameras));
-  const screen = {
-    panels: findPanels(document),
-    anchors: findAnchors(document),
-    rows: findRows(document),
-  };
-  const guide = new Guide(elements, screen, GUIDE_STEPS, source);
   elements.destroy.addEventListener("click", () => {
     feed.noteDestroyPressed();
     source.loseLead();
-    guide.completeAction("loseLead");
   });
+  elements.restore.addEventListener("click", () => source.restoreLead());
   new DashboardApp({ ...runtime, source, onState: createObserver(runtime, feed) }).start();
-  guide.start();
 }
 
 function main(): void {

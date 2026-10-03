@@ -14,24 +14,16 @@ import {
 } from "./demoScript";
 import type { SourceHandlers, SwarmEventSource } from "./transport";
 
-/** What the guide may ask the demo to do. It steers the demo only, never a real swarm. */
-export interface DemoControls {
-  loseLead(): void;
-  restoreLead(): void;
-  freeRun(): void;
-}
-
 const MIN_LEAD_POOL = 2;
 const IMMEDIATELY = 0;
 
-export class DemoSource implements SwarmEventSource, DemoControls {
+export class DemoSource implements SwarmEventSource {
   private handlers: SourceHandlers | null = null;
   private readonly cancels = new Set<Cancel>();
   private startedAt = 0;
   private busyUntil = 0;
   private handoverCount = 0;
   private leadIsDown = false;
-  private freeRunning = false;
   private leadPool: number;
 
   constructor(
@@ -84,19 +76,6 @@ export class DemoSource implements SwarmEventSource, DemoControls {
     if (this.handlers === null || !this.leadIsDown) return;
     this.play(buildRejoinScript(this.handoverCount - 1, this.leadPool, afterMs));
     this.leadIsDown = false;
-  }
-
-  /** Loses and restores the lead once per cycle, forever. */
-  freeRun(): void {
-    if (this.handlers === null || this.freeRunning) return;
-    this.freeRunning = true;
-    this.runCycle();
-  }
-
-  private runCycle(): void {
-    this.after(DEMO_TIMING.freeRunKillAtMs, () => this.loseLead());
-    this.after(DEMO_TIMING.freeRunRestoreAtMs, () => this.restoreLead());
-    this.after(DEMO_TIMING.freeRunCycleMs, () => this.runCycle());
   }
 
   private elapsed(): number {

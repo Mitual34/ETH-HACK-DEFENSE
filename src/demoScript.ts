@@ -15,9 +15,6 @@ export const DEMO_TIMING = {
   feedSwitchMs: 50,
   settleMs: 100,
   rejoinAfterMs: 2000,
-  freeRunKillAtMs: 3000,
-  freeRunRestoreAtMs: 5500,
-  freeRunCycleMs: 8000,
 } as const;
 
 const FIRST_EPOCH = 1;

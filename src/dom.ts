@@ -26,19 +26,15 @@ const ELEMENT_IDS = {
   historyMean: "history-mean",
   historyMax: "history-max",
   handoverCount: "handover-count",
+  pilotScreen: "pilot-screen",
+  pilotBadge: "pilot-badge",
+  pilotLost: "pilot-lost",
   feedScreen: "feed-screen",
+  demoControls: "demo-controls",
+  restore: "restore",
   destroy: "destroy",
   switchTime: "switch-time",
   switchNote: "switch-note",
-  guide: "guide",
-  guideProgress: "guide-progress",
-  guideQuestion: "guide-question",
-  guideAnswer: "guide-answer",
-  guideControls: "guide-controls",
-  guideAction: "guide-action",
-  guideBack: "guide-back",
-  guideNext: "guide-next",
-  guideSkip: "guide-skip",
 } as const;
 
 export type ElementKey = keyof typeof ELEMENT_IDS;
@@ -56,22 +52,6 @@ export function findElements(root: Document): DashboardElements {
     return [key, found] as const;
   });
   return Object.fromEntries(entries) as DashboardElements;
-}
-
-/** The sections the guide can show or hide, marked with data-panel in the page. */
-export function findPanels(root: ParentNode): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>("[data-panel]"));
-}
-
-/** The collapsible rows that group panels, marked with data-row in the page. */
-export function findRows(root: ParentNode): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>("[data-row]"));
-}
-
-/** The parts of the screen the guide thread can sit next to, keyed by data-anchor. */
-export function findAnchors(root: ParentNode): Map<string, HTMLElement> {
-  const anchors = Array.from(root.querySelectorAll<HTMLElement>("[data-anchor]"));
-  return new Map(anchors.map((anchor) => [anchor.dataset["anchor"] ?? "", anchor]));
 }
 
 export function make(tag: string, className: string, text: string): HTMLElement {

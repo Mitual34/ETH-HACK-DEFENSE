@@ -1,51 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_CONFIG, loadConfig } from "../src/config";
-import { DemoSource } from "../src/demo";
-import { DEMO_TIMING } from "../src/demoScript";
 import { FakeSocket, FakeTimeline } from "../src/fakes";
-import { applyEvent, initialState, leadsAtCurrentEpoch } from "../src/store";
 import { WebSocketSource, type ConnectionStatus } from "../src/transport";
-import { parseSwarmEvent } from "../src/validate";
-import { LIMITS } from "./helpers";
 
 const RETRY_MS = 1000;
-const CYCLES = 12;
 
 beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
 });
 afterEach(() => {
   vi.restoreAllMocks();
-});
-
-function runDemo(nodeCount: number): string[] {
-  const timeline = new FakeTimeline();
-  const packets: string[] = [];
-  const source = new DemoSource(nodeCount, timeline, timeline);
-  source.start({ onMessage: (text) => packets.push(text), onStatus: () => undefined });
-  source.freeRun();
-  timeline.advance(CYCLES * DEMO_TIMING.freeRunCycleMs);
-  source.stop();
-  return packets;
-}
-
-describe("DemoSource", () => {
-  it("is deterministic: two runs produce identical packets", () => {
-    expect(runDemo(5)).toEqual(runDemo(5));
-  });
-
-  it.each([2, 3, 5, 9])("with %i nodes every packet is valid and at most one node leads", (nodeCount) => {
-    let state = initialState();
-    for (const packet of runDemo(nodeCount)) {
-      const parsed = parseSwarmEvent(packet, LIMITS);
-      expect(parsed).not.toBeNull();
-      state = applyEvent(state, parsed!, 0, LIMITS.maxLogRows);
-      expect(leadsAtCurrentEpoch(state).length).toBeLessThanOrEqual(1);
-    }
-    expect(state.nodes.size).toBe(nodeCount);
-    expect(state.handover.completedCount).toBeGreaterThanOrEqual(CYCLES - 1);
-    expect(state.staleCount).toBe(0);
-  });
 });
 
 describe("WebSocketSource", () => {

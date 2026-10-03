@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="/src/layout.css" />
     <link rel="stylesheet" href="/src/panels.css" />
     <link rel="stylesheet" href="/src/charts.css" />
-    <link rel="stylesheet" href="/src/guide.css" />
     <link rel="stylesheet" href="/src/feed.css" />
+    <link rel="stylesheet" href="/src/controls.css" />
   </head>
   <body>
     <header class="top">
@@ -34,54 +34,58 @@
       </p>
     </div>
 
-    <section id="guide" class="guide" aria-label="Guided demo" hidden>
-      <p id="guide-progress" class="guide-progress"></p>
-      <p id="guide-question" class="bubble bubble-question" aria-live="polite"></p>
-      <p id="guide-answer" class="bubble bubble-answer"></p>
-      <div id="guide-controls" class="guide-controls">
-        <button id="guide-action" class="button-action" type="button" hidden></button>
-        <button id="guide-back" type="button">Back</button>
-        <button id="guide-next" class="button-next" type="button">Next</button>
-        <button id="guide-skip" class="button-skip" type="button">Skip the guide</button>
-      </div>
-    </section>
-
     <main>
-      <details class="row" data-row open>
+      <details class="row" open>
         <summary>Pilot</summary>
-        <div class="feed" data-panel="feed" data-anchor="feed">
-          <section class="panel" aria-label="Drone feeds">
-            <h2>Drone feeds</h2>
-            <div id="feed-screen" class="feed-screen"></div>
+        <div class="feed">
+          <section class="panel" aria-label="Pilot view">
+            <h2>Pilot view</h2>
+            <div id="pilot-screen" class="pilot-screen">
+              <p id="pilot-lost" class="pilot-lost" role="alert">WAITING FOR LEAD</p>
+              <p id="pilot-badge" class="pilot-badge"></p>
+            </div>
           </section>
           <section class="panel feed-side" aria-label="Feed switch">
             <h2>Feed switch</h2>
-            <button id="destroy" class="destroy" type="button">DESTROY</button>
+            <div id="demo-controls" class="demo-controls">
+              <button id="destroy" class="destroy" type="button">DESTROY</button>
+              <p class="hint">
+                DESTROY fails the live drone. It stops, and the pilot view moves to the next drone on
+                its own.
+              </p>
+              <button id="restore" class="restore" type="button">Restore failed drone</button>
+            </div>
             <p id="switch-time" class="stat-value" aria-live="polite">&mdash;</p>
-            <p id="switch-note" class="switch-note">press DESTROY to time a switch</p>
+            <p id="switch-note" class="switch-note">no switch timed yet</p>
+          </section>
+        </div>
+        <div class="grid wall">
+          <section class="panel w24" aria-label="Drone feeds">
+            <h2>Drone feeds</h2>
+            <div id="feed-screen" class="feed-screen"></div>
           </section>
         </div>
       </details>
 
-      <details class="row" data-row open>
+      <details class="row" open>
         <summary>Summary</summary>
-        <div class="grid" data-anchor="summary">
-          <section class="panel stat w4" data-panel="epoch">
+        <div class="grid">
+          <section class="panel stat w4">
             <h2>Epoch</h2>
             <p id="epoch" class="stat-value">0</p>
             <div id="epoch-spark" class="spark"></div>
           </section>
-          <section class="panel stat w4" data-panel="lead">
+          <section class="panel stat w4">
             <h2>Lead</h2>
             <p id="lead" class="stat-value">none</p>
             <p id="lead-alarm" class="alarm" role="alert" hidden>More than one node reports LEAD</p>
           </section>
-          <section class="panel stat w4" data-panel="size">
+          <section class="panel stat w4">
             <h2>Nodes</h2>
             <p id="node-count" class="stat-value">0</p>
             <div id="nodes-spark" class="spark"></div>
           </section>
-          <section class="panel w12 tall" data-panel="nodes" data-anchor="nodes">
+          <section class="panel w12 tall">
             <h2>Nodes</h2>
             <table>
               <thead>
@@ -95,7 +99,7 @@
               <tbody id="nodes"></tbody>
             </table>
           </section>
-          <section class="panel w6" data-panel="states">
+          <section class="panel w6">
             <h2>Node states</h2>
             <div class="pie">
               <div id="states-chart" class="pie-chart"></div>
@@ -110,7 +114,7 @@
               </table>
             </div>
           </section>
-          <section class="panel w6" data-panel="dropped">
+          <section class="panel w6">
             <h2>Packets</h2>
             <div class="pie">
               <div id="packets-chart" class="pie-chart"></div>
@@ -141,16 +145,16 @@
         </div>
       </details>
 
-      <details class="row" data-row open>
+      <details class="row" open>
         <summary>Handover</summary>
         <div class="grid">
-          <section class="panel stat w6" data-panel="handover" data-anchor="handover">
+          <section class="panel stat w6">
             <h2>Feed-dark time</h2>
             <p id="banner" class="banner" data-status="idle" aria-live="polite">No handover observed</p>
             <p id="timer" class="stat-value">&mdash;</p>
             <p id="timer-note" class="note">Waiting for a FEED_LOSS event</p>
           </section>
-          <section class="panel w6" data-panel="stages" data-anchor="stages">
+          <section class="panel w6">
             <h2>Stages</h2>
             <table>
               <thead>
@@ -162,7 +166,7 @@
               <tbody id="stages"></tbody>
             </table>
           </section>
-          <section class="panel w12" data-panel="history">
+          <section class="panel w12">
             <h2>Handover history</h2>
             <div class="series">
               <div id="history-chart" class="series-chart"></div>
@@ -195,10 +199,10 @@
         </div>
       </details>
 
-      <details class="row" data-row open>
+      <details class="row" open>
         <summary>Event log</summary>
         <div class="grid">
-          <section class="panel w24" data-panel="log">
+          <section class="panel w24">
             <h2>Events</h2>
             <div class="log-scroll">
               <table class="log">

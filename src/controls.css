@@ -1,0 +1,100 @@
+/* The DESTROY button, the restore button and the switch time. */
+
+:root {
+  /* The one deliberately loud colour on the page. */
+  --destroy: #e60023;
+  --destroy-deep: #8f0016;
+}
+
+.feed-side,
+.demo-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.feed-side > h2 {
+  align-self: flex-start;
+}
+
+/* The switch time is white so the only loud colour here is the button. */
+.feed-side .stat-value {
+  margin: 0;
+  color: var(--text);
+}
+
+.destroy {
+  width: min(100%, 260px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 6px solid var(--destroy-deep);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff4d5e, var(--destroy) 55%, var(--destroy-deep));
+  box-shadow:
+    0 12px 0 var(--destroy-deep),
+    0 18px 30px rgb(230 0 35 / 35%);
+  color: #fff;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  font-weight: var(--weight-wordmark);
+  letter-spacing: 0.06em;
+  margin: 6px 0 22px;
+  border-style: solid;
+}
+
+.destroy:hover:not([disabled]) {
+  border-color: var(--destroy-deep);
+  filter: brightness(1.1);
+}
+
+.destroy:active:not([disabled]) {
+  transform: translateY(8px);
+  box-shadow:
+    0 4px 0 var(--destroy-deep),
+    0 8px 16px rgb(230 0 35 / 35%);
+}
+
+.destroy[disabled] {
+  opacity: 0.55;
+}
+
+.switch-note {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.hint {
+  max-width: 30ch;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+button[disabled] {
+  cursor: not-allowed;
+}
+
+.restore {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.restore:hover {
+  border-color: var(--text);
+}
