@@ -19,7 +19,8 @@ npm run dev
 ```
 
 With no settings it opens a guided demo: seven questions, each answered from first
-principles in a sentence or two, each showing only the panels it talks about. Two
+principles in a sentence or two, each showing only the panels it talks about. The
+guide is a short text-message thread that moves next to the panel it explains. Two
 steps ask the viewer to press a button (lose the lead, bring it back). "Skip the
 guide" or the last step reveals every panel and loops the scenario. The steps live
 in `src/guideSteps.ts`.
@@ -84,6 +85,8 @@ src/guide*.ts       guided demo: steps and the card that walks through them
 src/clock.ts        clock and scheduler interfaces
 src/fakes.ts        fakes of every interface, for tests
 src/render.ts       DOM rendering (textContent only)
+src/fonts.ts        self-hosted Inter and IBM Plex Mono
+src/*.css           theme tokens (styles), panels, guide thread
 src/app.ts          wiring
 tests/              vitest suites
 ```

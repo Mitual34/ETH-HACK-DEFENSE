@@ -2,7 +2,7 @@
 
 import type { DemoControls } from "./demo";
 import type { DashboardElements } from "./dom";
-import type { GuideStep } from "./guideSteps";
+import { FINISHED_PLACEMENT, type AnchorName, type GuideSide, type GuideStep } from "./guideSteps";
 
 const LABEL = "First principles";
 const NEXT_LABEL = "Next";
@@ -12,6 +12,12 @@ const FINISHED_QUESTION = "Free run";
 const FINISHED_ANSWER =
   "Everything is now on screen. The lead is lost and replaced every few seconds. Reload the page to replay the guide.";
 
+/** The parts of the page the guide shows, hides and sits next to. */
+export interface GuideScreen {
+  panels: readonly HTMLElement[];
+  anchors: ReadonlyMap<string, HTMLElement>;
+}
+
 export class Guide {
   private index = 0;
   private finished = false;
@@ -19,7 +25,7 @@ export class Guide {
 
   constructor(
     private readonly elements: DashboardElements,
-    private readonly panels: readonly HTMLElement[],
+    private readonly screen: GuideScreen,
     private readonly steps: readonly GuideStep[],
     private readonly controls: DemoControls,
   ) {}
@@ -79,9 +85,10 @@ export class Guide {
     guideProgress.textContent = `${LABEL} · ${this.index + 1} of ${this.steps.length}`;
     guideQuestion.textContent = step.question;
     guideAnswer.textContent = step.answer;
-    for (const panel of this.panels) {
+    for (const panel of this.screen.panels) {
       panel.hidden = !(step.show as readonly string[]).includes(panel.dataset["panel"] ?? "");
     }
+    this.place(step.anchor, step.side);
     this.renderButtons(step);
   }
 
@@ -102,6 +109,17 @@ export class Guide {
     guideQuestion.textContent = FINISHED_QUESTION;
     guideAnswer.textContent = FINISHED_ANSWER;
     guideControls.hidden = true;
-    for (const panel of this.panels) panel.hidden = false;
+    for (const panel of this.screen.panels) panel.hidden = false;
+    this.place(FINISHED_PLACEMENT.anchor, FINISHED_PLACEMENT.side);
+  }
+
+  /** Moves the thread next to the part of the screen it is talking about. */
+  private place(anchorName: AnchorName, side: GuideSide): void {
+    const { guide } = this.elements;
+    const anchor = this.screen.anchors.get(anchorName);
+    guide.dataset["side"] = side;
+    if (anchor === undefined) return;
+    if (side === "above") anchor.before(guide);
+    else anchor.after(guide);
   }
 }

@@ -14,18 +14,21 @@
   </head>
   <body>
     <header class="top">
-      <h1>TALOS <span class="subtitle">swarm handover, observed</span></h1>
+      <div class="brand">
+        <h1 class="wordmark">TA<span class="wordmark-accent">LOS</span></h1>
+        <p class="tagline">The pilot&rsquo;s eye never closes.</p>
+      </div>
       <p id="connection" class="pill" data-status="connecting">Connecting to relay</p>
     </header>
 
     <p id="demo-notice" class="notice" hidden>
-      Demo data. Timings on this screen are scripted, not measured.
+      Simulated demonstration &middot; timings are scripted, not measured
     </p>
 
     <section id="guide" class="guide" aria-label="Guided demo" hidden>
       <p id="guide-progress" class="guide-progress"></p>
-      <h2 id="guide-question" class="guide-question" aria-live="polite"></h2>
-      <p id="guide-answer" class="guide-answer"></p>
+      <p id="guide-question" class="bubble bubble-question" aria-live="polite"></p>
+      <p id="guide-answer" class="bubble bubble-answer"></p>
       <div id="guide-controls" class="guide-controls">
         <button id="guide-action" class="button-action" type="button" hidden></button>
         <button id="guide-back" type="button">Back</button>
@@ -35,7 +38,7 @@
     </section>
 
     <main>
-      <section class="summary" aria-label="Swarm summary">
+      <section class="summary" data-anchor="summary" aria-label="Swarm summary">
         <div class="tile" data-panel="epoch">
           <h2>Epoch</h2>
           <p id="epoch" class="big">0</p>
@@ -49,16 +52,16 @@
         </div>
         <div class="tile" data-panel="dropped">
           <h2>Dropped packets</h2>
-          <p><span id="malformed">0</span> malformed</p>
-          <p><span id="stale">0</span> out of order</p>
+          <p><span id="malformed" class="telemetry">0</span> malformed</p>
+          <p><span id="stale" class="telemetry">0</span> out of order</p>
         </div>
       </section>
 
-      <section class="handover" data-panel="handover" aria-label="Handover timer">
+      <section class="handover" data-panel="handover" data-anchor="handover" aria-label="Handover timer">
         <p id="banner" class="banner" data-status="idle" aria-live="polite">No handover observed</p>
         <p id="timer" class="timer">&mdash;</p>
         <p id="timer-note" class="note">Waiting for a FEED_LOSS event</p>
-        <table class="stages" data-panel="stages">
+        <table class="stages" data-panel="stages" data-anchor="stages">
           <thead>
             <tr>
               <th scope="col">Stage</th>
@@ -69,7 +72,7 @@
         </table>
       </section>
 
-      <section data-panel="nodes" aria-label="Node states">
+      <section data-panel="nodes" data-anchor="nodes" aria-label="Node states">
         <h2>Nodes</h2>
         <ul id="nodes" class="nodes"></ul>
       </section>

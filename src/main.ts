@@ -4,7 +4,8 @@ import { DashboardApp } from "./app";
 import { BrowserClock, BrowserScheduler } from "./clock";
 import { loadConfig } from "./config";
 import { DemoSource } from "./demo";
-import { findElements, findPanels } from "./dom";
+import { findAnchors, findElements, findPanels } from "./dom";
+import "./fonts";
 import { Guide } from "./guide";
 import { GUIDE_STEPS } from "./guideSteps";
 import { logWarning } from "./log";
@@ -24,7 +25,8 @@ function main(): void {
   }
   const source = new DemoSource(config.demoNodeCount, clock, scheduler);
   new DashboardApp({ config, source, clock, scheduler, elements }).start();
-  new Guide(elements, findPanels(document), GUIDE_STEPS, source).start();
+  const screen = { panels: findPanels(document), anchors: findAnchors(document) };
+  new Guide(elements, screen, GUIDE_STEPS, source).start();
 }
 
 try {

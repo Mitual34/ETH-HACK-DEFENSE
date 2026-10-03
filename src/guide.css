@@ -1,50 +1,86 @@
-/* The guide card: one question, one short answer, one thing to press. */
+/*
+ * The guide is a short text-message thread that sits next to the panel it is
+ * talking about: the question on the right, the answer on the left, then replies.
+ */
 
 .guide {
-  margin-top: var(--gap);
-  padding: 20px;
-  background: var(--panel);
-  border: 1px solid var(--lead);
-  border-radius: 8px;
+  position: relative;
+  display: grid;
+  gap: 8px;
+  max-width: 460px;
+  padding: 12px 0;
+}
+
+/* A small pointer towards the panel being explained. */
+.guide::before {
+  content: "";
+  position: absolute;
+  left: 28px;
+  border: 8px solid transparent;
+}
+
+.guide[data-side="below"]::before {
+  top: -6px;
+  border-bottom-color: var(--raised);
+}
+
+.guide[data-side="above"]::before {
+  bottom: -6px;
+  border-top-color: var(--raised);
+}
+
+/* Inside a panel the thread needs room from the content around it. */
+.handover > .guide {
+  margin: 4px 0 12px;
 }
 
 .guide-progress {
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--lead);
+  color: var(--muted);
+  text-align: center;
 }
 
-.guide-question {
-  margin: 6px 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
+.bubble {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  line-height: 1.4;
+}
+
+.bubble-question {
+  justify-self: end;
+  border-bottom-right-radius: 4px;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: var(--weight-title);
+}
+
+.bubble-answer {
+  justify-self: start;
+  border-bottom-left-radius: 4px;
+  background: var(--raised);
   color: var(--text);
-}
-
-.guide-answer {
-  max-width: 62ch;
-  font-size: 1.05rem;
-  line-height: 1.5;
 }
 
 .guide-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-top: var(--gap);
+  gap: 8px;
+  margin-top: 4px;
 }
 
 button {
-  padding: 8px 16px;
+  padding: 7px 16px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
   color: var(--text);
   font: inherit;
+  font-size: 0.9rem;
   cursor: pointer;
 }
 
@@ -53,7 +89,7 @@ button:hover:not([disabled]) {
 }
 
 button:focus-visible {
-  outline: 2px solid var(--lead);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -63,16 +99,16 @@ button[disabled] {
 }
 
 .button-action {
-  border-color: var(--danger);
-  background: var(--danger);
+  border-color: var(--accent);
+  background: var(--accent);
   color: var(--bg);
-  font-weight: 700;
+  font-weight: var(--weight-title);
 }
 
 .button-next {
-  border-color: var(--lead);
-  color: var(--lead);
-  font-weight: 600;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: var(--weight-title);
 }
 
 .button-skip {

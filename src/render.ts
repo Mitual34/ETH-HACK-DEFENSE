@@ -35,7 +35,10 @@ function nodeCard(node: NodeView, currentEpoch: number): HTMLElement {
   card.dataset["state"] = node.state;
   card.append(make("span", "node-id", node.nodeId), make("span", "node-state", node.state));
   card.append(make("span", "node-epoch", `epoch ${node.epoch}`));
-  if (node.epoch < currentEpoch) card.append(make("span", "node-stale", "stale epoch"));
+  if (node.epoch < currentEpoch) {
+    card.dataset["stale"] = "true";
+    card.append(make("span", "node-stale", "stale epoch"));
+  }
   return card;
 }
 

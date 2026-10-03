@@ -26,13 +26,17 @@ function startGuide(): Harness {
     panel.dataset["panel"] = name;
     return panel;
   });
+  const summary = document.createElement("section");
+  document.body.append(summary, ...panels);
+  const anchors = new Map<string, HTMLElement>([["summary", summary]]);
+  for (const panel of panels) anchors.set(panel.dataset["panel"] ?? "", panel);
   const calls: string[] = [];
   const controls: DemoControls = {
     loseLead: () => calls.push("loseLead"),
     restoreLead: () => calls.push("restoreLead"),
     freeRun: () => calls.push("freeRun"),
   };
-  new Guide(elements, panels, GUIDE_STEPS, controls).start();
+  new Guide(elements, { panels, anchors }, GUIDE_STEPS, controls).start();
   return { elements, panels, calls };
 }
 
@@ -50,6 +54,16 @@ describe("Guide", () => {
     expect(elements.guideProgress.textContent).toBe(`First principles · 1 of ${GUIDE_STEPS.length}`);
     expect(elements.guideQuestion.textContent).toBe("What is the problem?");
     expect(visible(panels)).toEqual(["nodes"]);
+  });
+
+  it("moves the thread next to the part of the screen each step explains", () => {
+    const { elements, panels } = startGuide();
+    const nodes = panels[PANEL_NAMES.indexOf("nodes")]!;
+    expect(elements.guide.previousElementSibling).toBe(nodes);
+    expect(elements.guide.dataset["side"]).toBe("below");
+    clickNext(elements, 2);
+    expect(elements.guide.nextElementSibling).toBe(nodes);
+    expect(elements.guide.dataset["side"]).toBe("above");
   });
 
   it("holds the viewer on an action step until the action is pressed, and runs it once", () => {

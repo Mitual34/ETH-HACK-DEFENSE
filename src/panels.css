@@ -1,17 +1,18 @@
-/* Handover timer, node cards and event log. Colours come from styles.css. */
+/* Handover timer, node cards and event log. Tokens come from styles.css. */
 
 .banner {
-  font-weight: 600;
+  font-weight: var(--weight-title);
   letter-spacing: 0.04em;
   color: var(--muted);
 }
 
+/* A critical alert: title weight plus the alert token. */
 .banner[data-status="running"] {
-  color: var(--danger);
+  color: var(--alert);
 }
 
 .banner[data-status="complete"] {
-  color: var(--lead);
+  color: var(--accent);
   animation: blink 800ms ease-in-out 1;
 }
 
@@ -35,8 +36,9 @@
 }
 
 .timer {
+  font-family: var(--font-mono);
   font-size: 3.5rem;
-  font-weight: 700;
+  font-weight: var(--weight-body);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
@@ -51,6 +53,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  font-weight: var(--weight-table);
 }
 
 th,
@@ -62,15 +65,15 @@ td {
 
 th {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: var(--weight-title);
 }
 
 .stages {
   max-width: 420px;
 }
 
-.stage-value,
-.log-time {
+.stage-value {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -92,11 +95,13 @@ th {
 
 .node-id {
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: var(--weight-title);
 }
 
-.node-state {
-  font-weight: 600;
+.node-state,
+.node-epoch,
+.node-stale {
+  font-family: var(--font-mono);
 }
 
 .node-epoch,
@@ -107,6 +112,11 @@ th {
 
 .node-stale {
   color: var(--successor);
+}
+
+/* A node still reporting an old epoch holds no authority, so it recedes. */
+.node[data-stale="true"] {
+  opacity: 0.5;
 }
 
 .node[data-state="LEAD"] {
@@ -122,7 +132,7 @@ th {
 }
 
 .node[data-state="ISOLATED"] {
-  border-left-color: var(--danger);
+  border-left-color: var(--alert);
 }
 
 .node[data-state="FENCED"],
@@ -143,10 +153,21 @@ th {
   border-radius: 8px;
 }
 
+/* The event log is monospaced throughout, headers included. */
+.log,
+.log th {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
 .log th {
   position: sticky;
   top: 0;
   background: var(--panel);
+}
+
+.log-time {
+  white-space: nowrap;
 }
 
 .log-reason {

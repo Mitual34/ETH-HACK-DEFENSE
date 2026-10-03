@@ -47,6 +47,12 @@ export function findPanels(root: ParentNode): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>("[data-panel]"));
 }
 
+/** The parts of the screen the guide thread can sit next to, keyed by data-anchor. */
+export function findAnchors(root: ParentNode): Map<string, HTMLElement> {
+  const anchors = Array.from(root.querySelectorAll<HTMLElement>("[data-anchor]"));
+  return new Map(anchors.map((anchor) => [anchor.dataset["anchor"] ?? "", anchor]));
+}
+
 export function make(tag: string, className: string, text: string): HTMLElement {
   const created = document.createElement(tag);
   if (className !== "") created.className = className;
