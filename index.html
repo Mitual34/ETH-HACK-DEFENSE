@@ -10,6 +10,7 @@
     <title>TALOS dashboard</title>
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="stylesheet" href="/src/panels.css" />
+    <link rel="stylesheet" href="/src/guide.css" />
   </head>
   <body>
     <header class="top">
@@ -21,31 +22,43 @@
       Demo data. Timings on this screen are scripted, not measured.
     </p>
 
+    <section id="guide" class="guide" aria-label="Guided demo" hidden>
+      <p id="guide-progress" class="guide-progress"></p>
+      <h2 id="guide-question" class="guide-question" aria-live="polite"></h2>
+      <p id="guide-answer" class="guide-answer"></p>
+      <div id="guide-controls" class="guide-controls">
+        <button id="guide-action" class="button-action" type="button" hidden></button>
+        <button id="guide-back" type="button">Back</button>
+        <button id="guide-next" class="button-next" type="button">Next</button>
+        <button id="guide-skip" class="button-skip" type="button">Skip the guide</button>
+      </div>
+    </section>
+
     <main>
       <section class="summary" aria-label="Swarm summary">
-        <div class="tile">
+        <div class="tile" data-panel="epoch">
           <h2>Epoch</h2>
           <p id="epoch" class="big">0</p>
         </div>
-        <div class="tile">
+        <div class="tile" data-panel="lead">
           <h2>Lead</h2>
           <p id="lead" class="big">none</p>
           <p id="lead-alarm" class="alarm" role="alert" hidden>
             More than one node reports LEAD at this epoch
           </p>
         </div>
-        <div class="tile">
+        <div class="tile" data-panel="dropped">
           <h2>Dropped packets</h2>
           <p><span id="malformed">0</span> malformed</p>
           <p><span id="stale">0</span> out of order</p>
         </div>
       </section>
 
-      <section class="handover" aria-label="Handover timer">
+      <section class="handover" data-panel="handover" aria-label="Handover timer">
         <p id="banner" class="banner" data-status="idle" aria-live="polite">No handover observed</p>
         <p id="timer" class="timer">&mdash;</p>
         <p id="timer-note" class="note">Waiting for a FEED_LOSS event</p>
-        <table class="stages">
+        <table class="stages" data-panel="stages">
           <thead>
             <tr>
               <th scope="col">Stage</th>
@@ -56,12 +69,12 @@
         </table>
       </section>
 
-      <section aria-label="Node states">
+      <section data-panel="nodes" aria-label="Node states">
         <h2>Nodes</h2>
         <ul id="nodes" class="nodes"></ul>
       </section>
 
-      <section aria-label="Event log">
+      <section data-panel="log" aria-label="Event log">
         <h2>Event log</h2>
         <div class="log-scroll">
           <table class="log">

@@ -18,8 +18,13 @@ npm install
 npm run dev
 ```
 
-With no settings it plays a scripted demo scenario in the browser. **Timings shown
-in demo mode are scripted, not measured**, and the page says so.
+With no settings it opens a guided demo: seven questions, each answered from first
+principles in a sentence or two, each showing only the panels it talks about. Two
+steps ask the viewer to press a button (lose the lead, bring it back). "Skip the
+guide" or the last step reveals every panel and loops the scenario. The steps live
+in `src/guideSteps.ts`.
+
+**Timings shown in demo mode are scripted, not measured**, and the page says so.
 
 To read a real ground relay, copy `.env.example` to `.env` and set:
 
@@ -74,7 +79,8 @@ src/validate.ts     untrusted packet -> event or null
 src/handover.ts     handover timer (pure functions)
 src/store.ts        observed state (pure functions)
 src/transport.ts    event source interface + WebSocket source
-src/demo*.ts        scripted demo source
+src/demo*.ts        scripted demo source and its controls
+src/guide*.ts       guided demo: steps and the card that walks through them
 src/clock.ts        clock and scheduler interfaces
 src/fakes.ts        fakes of every interface, for tests
 src/render.ts       DOM rendering (textContent only)

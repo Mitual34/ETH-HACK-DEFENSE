@@ -1,0 +1,82 @@
+/* The guide card: one question, one short answer, one thing to press. */
+
+.guide {
+  margin-top: var(--gap);
+  padding: 20px;
+  background: var(--panel);
+  border: 1px solid var(--lead);
+  border-radius: 8px;
+}
+
+.guide-progress {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lead);
+}
+
+.guide-question {
+  margin: 6px 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+.guide-answer {
+  max-width: 62ch;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.guide-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: var(--gap);
+}
+
+button {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not([disabled]) {
+  border-color: var(--text);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--lead);
+  outline-offset: 2px;
+}
+
+button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button-action {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.button-next {
+  border-color: var(--lead);
+  color: var(--lead);
+  font-weight: 600;
+}
+
+.button-skip {
+  margin-left: auto;
+  border-color: transparent;
+  color: var(--muted);
+}

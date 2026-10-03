@@ -14,6 +14,15 @@ const ELEMENT_IDS = {
   stages: "stages",
   nodes: "nodes",
   log: "log",
+  guide: "guide",
+  guideProgress: "guide-progress",
+  guideQuestion: "guide-question",
+  guideAnswer: "guide-answer",
+  guideControls: "guide-controls",
+  guideAction: "guide-action",
+  guideBack: "guide-back",
+  guideNext: "guide-next",
+  guideSkip: "guide-skip",
 } as const;
 
 export type ElementKey = keyof typeof ELEMENT_IDS;
@@ -31,6 +40,11 @@ export function findElements(root: Document): DashboardElements {
     return [key, found] as const;
   });
   return Object.fromEntries(entries) as DashboardElements;
+}
+
+/** The sections the guide can show or hide, marked with data-panel in the page. */
+export function findPanels(root: ParentNode): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>("[data-panel]"));
 }
 
 export function make(tag: string, className: string, text: string): HTMLElement {

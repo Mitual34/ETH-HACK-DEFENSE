@@ -23,7 +23,8 @@ function runDemo(nodeCount: number): string[] {
   const packets: string[] = [];
   const source = new DemoSource(nodeCount, timeline, timeline);
   source.start({ onMessage: (text) => packets.push(text), onStatus: () => undefined });
-  timeline.advance(CYCLES * DEMO_TIMING.cycleLengthMs);
+  source.freeRun();
+  timeline.advance(CYCLES * DEMO_TIMING.freeRunCycleMs);
   source.stop();
   return packets;
 }
