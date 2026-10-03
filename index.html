@@ -49,11 +49,8 @@
             <h2>Feed switch</h2>
             <div id="demo-controls" class="demo-controls">
               <button id="destroy" class="destroy" type="button">DESTROY</button>
-              <p class="hint">
-                DESTROY fails the live drone. It stops, and the pilot view moves to the next drone on
-                its own.
-              </p>
-              <button id="restore" class="restore" type="button">Restore failed drone</button>
+              <p id="demo-hint" class="hint" aria-live="polite"></p>
+              <button id="restore" class="restore" type="button">Restore destroyed drone</button>
             </div>
             <p id="switch-time" class="stat-value" aria-live="polite">&mdash;</p>
             <p id="switch-note" class="switch-note">no switch timed yet</p>

@@ -31,6 +31,7 @@ const ELEMENT_IDS = {
   pilotLost: "pilot-lost",
   feedScreen: "feed-screen",
   demoControls: "demo-controls",
+  demoHint: "demo-hint",
   restore: "restore",
   destroy: "destroy",
   switchTime: "switch-time",

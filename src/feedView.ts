@@ -17,6 +17,8 @@ import { leadsAtCurrentEpoch, type DashboardState } from "./store";
 import type { SwitchResult, SwitchTimer } from "./switchTimer";
 
 const MS_DIGITS = 1;
+const HINT_READY = "DESTROY stops the live drone. The pilot view moves to the next drone on its own.";
+const HINT_NONE_LEFT = "No drone is left to take over. Restore a destroyed drone first.";
 
 export interface FeedParts {
   elements: DashboardElements;
@@ -42,6 +44,7 @@ export class FeedView {
   private shownLead: string | null = null;
   private pilotIndex = NO_TILE;
   private lostIndex = NO_TILE;
+  private hasSuccessor = false;
 
   constructor(private readonly parts: FeedParts) {}
 
@@ -63,6 +66,9 @@ export class FeedView {
     const ids = orderedIds(state);
     const running = handoverStatus(state.handover) === "running";
     const lead = running ? null : (leadsAtCurrentEpoch(state)[0] ?? null);
+    this.hasSuccessor = [...state.nodes.values()].some(
+      (node) => node.state === "SUCCESSOR" && node.epoch === state.epoch,
+    );
     if (lead !== this.shownLead) this.changeLead(lead, ids);
     this.parts.wall.render(this.pilotIndex, this.stoppedTiles(state, ids));
     this.renderDestroy();
@@ -94,7 +100,7 @@ export class FeedView {
     else waitForFrame(surface, () => this.report(timer.finish()));
   }
 
-  /** A drone is stopped while its feed is lost, and for as long as its epoch is out of date. */
+  /** A drone is down while its feed is lost, and for as long as its epoch is out of date. */
   private stoppedTiles(state: DashboardState, ids: string[]): Set<number> {
     const stopped = new Set<number>();
     if (this.lostIndex !== NO_TILE) stopped.add(this.lostIndex);
@@ -113,8 +119,15 @@ export class FeedView {
     switchNote.textContent = `decision ${formatMs(result.decisionMs)} + picture ${formatMs(result.pictureMs)}`;
   }
 
-  /** One switch at a time: the button waits until the last one is on screen. */
+  /**
+   * One switch at a time, and only while a drone is standing by to take over:
+   * the button waits until the last switch is on screen and a successor exists.
+   */
   private renderDestroy(): void {
-    this.parts.elements.destroy.toggleAttribute("disabled", this.parts.timer.isRunning());
+    const { destroy, demoHint } = this.parts.elements;
+    const switching = this.parts.timer.isRunning();
+    destroy.toggleAttribute("disabled", switching || !this.hasSuccessor);
+    const noneLeft = !switching && this.shownLead !== null && !this.hasSuccessor;
+    demoHint.textContent = noneLeft ? HINT_NONE_LEFT : HINT_READY;
   }
 }

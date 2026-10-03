@@ -1,6 +1,6 @@
 /**
  * The feed wall: every drone in its own labelled tile, all on screen at once.
- * A drone that has failed stops: its picture freezes and the tile says so.
+ * A destroyed drone stops working: its picture goes dark and the tile says so.
  */
 
 import type { FeedSlot } from "./cameras";
@@ -12,7 +12,7 @@ const STATUS = {
   pilot: "LIVE",
   standby: "STANDBY",
   unavailable: "NOT AVAILABLE",
-  stopped: "STOPPED",
+  stopped: "DESTROYED",
 } as const;
 
 interface Tile {
@@ -38,7 +38,7 @@ function statusText(tile: Tile, isPilot: boolean, isStopped: boolean): string {
   return tile.available ? STATUS.standby : STATUS.unavailable;
 }
 
-/** Freezes a stopped drone's picture on its last frame, and resumes it when the drone is back. */
+/** Stops a destroyed drone's picture, and resumes it when the drone is back. */
 function setPlaying(surface: HTMLElement, playing: boolean): void {
   if (!(surface instanceof HTMLVideoElement) || surface.paused === !playing) return;
   if (!playing) {

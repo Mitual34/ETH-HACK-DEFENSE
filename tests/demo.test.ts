@@ -36,23 +36,64 @@ function run(nodeCount: number, drive: (source: DemoSource, timeline: FakeTimeli
   return result;
 }
 
-function pressRepeatedly(source: DemoSource, timeline: FakeTimeline): void {
+/** Destroy the lead, then restore it, so a drone is always standing by for the next press. */
+function destroyAndRestore(source: DemoSource, timeline: FakeTimeline): void {
   for (let press = 0; press < PRESSES; press += 1) {
     source.loseLead();
+    timeline.advance(SETTLE_MS);
+    source.restoreLead();
     timeline.advance(SETTLE_MS);
   }
 }
 
+function staleNodes(state: DashboardState): string[] {
+  return [...state.nodes.values()].filter((node) => node.epoch < state.epoch).map((node) => node.nodeId);
+}
+
 describe("DemoSource", () => {
   it("is deterministic: two runs produce identical packets", () => {
-    expect(run(5, pressRepeatedly).packets).toEqual(run(5, pressRepeatedly).packets);
+    expect(run(5, destroyAndRestore).packets).toEqual(run(5, destroyAndRestore).packets);
   });
 
   it.each([2, 3, 5, 9])("with %i nodes every handover completes and events stay in order", (nodeCount) => {
-    const { state } = run(nodeCount, pressRepeatedly);
+    const { state } = run(nodeCount, destroyAndRestore);
     expect(state.nodes.size).toBe(nodeCount);
     expect(state.handover.completedCount).toBe(PRESSES);
     expect(state.staleCount).toBe(0);
+    expect(staleNodes(state)).toEqual([]);
+  });
+
+  it("a destroyed drone stays down while the lead moves on to the next drone", () => {
+    const { state } = run(5, (source) => {
+      source.loseLead();
+      source.loseLead();
+    });
+    expect(leadsAtCurrentEpoch(state)).toEqual(["D3"]);
+    expect(staleNodes(state)).toEqual(["D1", "D2"]);
+    expect(state.nodes.get("D4")?.state).toBe("SUCCESSOR");
+  });
+
+  it("with two cameras, a second DESTROY is ignored until a destroyed drone is restored", () => {
+    const { state } = run(5, (source) => {
+      source.setLeadPool(2);
+      source.loseLead();
+      source.loseLead();
+    });
+    expect(leadsAtCurrentEpoch(state)).toEqual(["D2"]);
+    expect(state.handover.completedCount).toBe(1);
+    expect(staleNodes(state)).toEqual(["D1"]);
+  });
+
+  it("a restored drone becomes the successor when none is left, so the lead can move back to it", () => {
+    const { state } = run(5, (source) => {
+      source.setLeadPool(2);
+      source.loseLead();
+      source.restoreLead();
+      source.loseLead();
+    });
+    expect(leadsAtCurrentEpoch(state)).toEqual(["D1"]);
+    expect(staleNodes(state)).toEqual(["D2"]);
+    expect(state.nodes.get("D3")?.state).toBe("FOLLOWER");
   });
 
   it("queues scenes in order even when the controls are pressed before boot finishes", () => {
@@ -66,29 +107,7 @@ describe("DemoSource", () => {
     expect(leadsAtCurrentEpoch(state)).toEqual(["D3"]);
   });
 
-  it("with a lead pool of two, the lead alternates between D1 and D2 while the rest follow", () => {
-    const { state } = run(5, (source) => {
-      source.setLeadPool(2);
-      for (let press = 0; press < 3; press += 1) source.loseLead();
-    });
-    expect(leadsAtCurrentEpoch(state)).toEqual(["D2"]);
-    expect(state.epoch).toBe(4);
-    expect(state.nodes.get("D3")?.state).toBe("FOLLOWER");
-  });
-
-  it("a second DESTROY does not wait for the old lead's rejoin delay", () => {
-    let pressedAt = 0;
-    const { feedLossAt } = run(5, (source, timeline) => {
-      timeline.advance(SETTLE_MS);
-      source.loseLead();
-      timeline.advance(SETTLE_MS);
-      pressedAt = timeline.now();
-      source.loseLead();
-    });
-    expect(feedLossAt[1]).toBe(pressedAt);
-  });
-
-  it("ignores a restore when no lead is down", () => {
+  it("ignores a restore when no drone is down", () => {
     const { state } = run(5, (source) => source.restoreLead());
     expect(state.epoch).toBe(1);
     expect(leadsAtCurrentEpoch(state)).toEqual(["D1"]);

@@ -32,15 +32,17 @@ no camera says CAMERA NOT AVAILABLE. Each tile carries a status:
 - **LIVE**: the lead, framed in amber. This is the drone on the pilot view.
 - **STANDBY**: a working camera that is not the lead.
 - **NOT AVAILABLE**: no camera for this drone.
-- **STOPPED**: a failed drone. Its picture freezes and greys out, and it stays
-  stopped until it is restored.
+- **DESTROYED**: a destroyed drone. It stops working: its tile goes dark and shows
+  NO SIGNAL, and it stays that way until it is restored.
 
 In the demo only drones with a working camera take turns as lead, so with two
 cameras the lead alternates between DRONE 1 and DRONE 2 and the rest follow.
 
-Press **DESTROY** to fail the live drone. Its tile stops, the handover runs, and
-when the new lead is named the pilot view moves to that drone on its own. Press
-**Restore failed drone** to bring the stopped drone back as a follower. The
+Press **DESTROY** to destroy the live drone. It stops working, the handover runs,
+and when the new lead is named the pilot view moves on to that drone by itself. A
+destroyed drone never comes back on its own: press **Restore destroyed drone** to
+bring it back. When no drone is left to take over, DESTROY is disabled until you
+restore one. The
 switch time is shown in milliseconds, split in two:
 
 - **decision**: from the press until the system names the new lead. In demo mode

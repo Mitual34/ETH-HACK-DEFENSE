@@ -80,14 +80,25 @@
   box-shadow: 0 0 18px rgb(255 176 32 / 35%);
 }
 
-/* A failed drone stops: frozen, greyed and framed in the alert colour. */
+/* A destroyed drone stops working: no picture at all, just a dark tile that says so. */
 .feed-tile[data-stopped="true"] {
   border-color: var(--alert);
 }
 
 .feed-tile[data-stopped="true"] .feed-surface {
-  opacity: 0.25;
-  filter: grayscale(1);
+  visibility: hidden;
+}
+
+.feed-tile[data-stopped="true"]::after {
+  content: "NO SIGNAL";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--alert);
+  font-weight: var(--weight-title);
+  font-size: 1.1rem;
+  letter-spacing: 0.2em;
 }
 
 .feed-surface {

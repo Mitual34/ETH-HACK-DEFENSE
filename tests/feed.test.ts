@@ -85,14 +85,14 @@ describe("FeedView", () => {
     expect(switchTime.textContent).toBe("");
   });
 
-  it("stops the failed drone, moves the pilot screen to the next one by itself, and times it in ms", () => {
+  it("stops the destroyed drone, moves the pilot screen to the next one by itself, and times it in ms", () => {
     const harness = startFeed();
     const { timeline, elements, feed, observe } = harness;
     bootTwoNodes(harness);
     feed.noteDestroyPressed();
     timeline.advance(5);
     observe({ timestamp: 100, node_id: "D1", epoch: 1, state: "LEAD", event: "FEED_LOSS" });
-    expect(tileStatuses(elements)).toEqual(["STOPPED", "NOT AVAILABLE"]);
+    expect(tileStatuses(elements)).toEqual(["DESTROYED", "NOT AVAILABLE"]);
     expect(elements.pilotLost.hidden).toBe(false);
     expect(elements.destroy.hasAttribute("disabled")).toBe(true);
     timeline.advance(400);
@@ -103,9 +103,12 @@ describe("FeedView", () => {
     expect(elements.pilotLost.hidden).toBe(true);
     timeline.advance(12.5);
     harness.presentFrame();
-    expect(tileStatuses(elements)).toEqual(["STOPPED", "LIVE"]);
+    expect(tileStatuses(elements)).toEqual(["DESTROYED", "LIVE"]);
     expect(elements.switchTime.textContent).toBe("417.5 ms");
     expect(elements.switchNote.textContent).toBe("decision 405.0 ms + picture 12.5 ms");
+    expect(elements.destroy.hasAttribute("disabled")).toBe(true);
+    expect(elements.demoHint.textContent).toContain("No drone is left");
+    observe({ timestamp: 950, node_id: "D1", epoch: 2, state: "SUCCESSOR" });
     expect(elements.destroy.hasAttribute("disabled")).toBe(false);
   });
 
@@ -114,7 +117,7 @@ describe("FeedView", () => {
     bootTwoNodes(harness);
     failLead(harness);
     harness.observe({ timestamp: 900, node_id: "D1", epoch: 1, state: "FENCED" });
-    expect(tileStatuses(harness.elements)).toEqual(["STOPPED", "LIVE"]);
+    expect(tileStatuses(harness.elements)).toEqual(["DESTROYED", "LIVE"]);
     harness.observe({ timestamp: 950, node_id: "D1", epoch: 2, state: "FOLLOWER" });
     expect(tileStatuses(harness.elements)).toEqual(["NOT AVAILABLE", "LIVE"]);
   });

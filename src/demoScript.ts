@@ -1,6 +1,6 @@
 /**
- * Scripted scenes so the dashboard runs with no relay: boot, lose the lead,
- * bring the old lead back. They work for any node count >= 2.
+ * Scripted scenes so the dashboard runs with no relay: boot, destroy the lead,
+ * restore a destroyed drone. They work for any node count >= 2.
  *
  * The delays below are scripted from the design targets. They are NOT
  * measurements and say nothing about how the real system performs.
@@ -17,7 +17,7 @@ export const DEMO_TIMING = {
   rejoinAfterMs: 2000,
 } as const;
 
-const FIRST_EPOCH = 1;
+export const FIRST_EPOCH = 1;
 
 /** offsetMs is measured from the moment the scene starts playing. */
 export interface ScriptedEvent {
@@ -77,41 +77,40 @@ function takeoverSteps(lead: number, successor: number, epoch: number): Scripted
   ];
 }
 
-/**
- * The lead of this cycle is lost and the successor takes over at epoch + 1.
- * The lead rotates through the first leadPool nodes only, so with two cameras
- * the lead alternates between drone 1 and drone 2 while the rest follow.
- */
-export function buildHandoverScript(nodeCount: number, cycle: number, leadPool: number): ScriptedEvent[] {
-  const epoch = FIRST_EPOCH + cycle;
-  const lead = cycle % leadPool;
-  const successor = (cycle + 1) % leadPool;
-  const nextSuccessor = (cycle + 2) % leadPool;
+/** Who is involved in one handover. Destroyed drones take no part: they stay down. */
+export interface HandoverPlan {
+  nodeCount: number;
+  epoch: number;
+  lead: number;
+  successor: number;
+  /** The drone that becomes the next successor, or null when none is left standing. */
+  nextSuccessor: number | null;
+  down: readonly number[];
+}
+
+/** The lead is destroyed and the successor takes over at epoch + 1. */
+export function buildHandoverScript(plan: HandoverPlan): ScriptedEvent[] {
+  const { nodeCount, epoch, lead, successor, nextSuccessor, down } = plan;
   const script = takeoverSteps(lead, successor, epoch);
   const settled = (script.at(-1)?.offsetMs ?? 0) + DEMO_TIMING.settleMs;
   for (let node = 0; node < nodeCount; node += 1) {
-    if (node === lead || node === successor) continue;
+    if (node === lead || node === successor || down.includes(node)) continue;
     const role = node === nextSuccessor ? "SUCCESSOR" : "FOLLOWER";
     script.push(scripted(settled, node, epoch + 1, role, "STATE_CHANGE", "new epoch seen"));
   }
   return script;
 }
 
-/**
- * The lead lost in this cycle returns, is fenced by the higher epoch, and rejoins
- * after rejoinAfterMs. Zero makes it rejoin at once.
- */
+/** A destroyed drone returns at its old epoch, is fenced by the higher one, then rejoins. */
 export function buildRejoinScript(
-  cycle: number,
-  leadPool: number,
-  rejoinAfterMs: number,
+  node: number,
+  staleEpoch: number,
+  epoch: number,
+  role: NodeState,
 ): ScriptedEvent[] {
-  const epoch = FIRST_EPOCH + cycle;
-  const lead = cycle % leadPool;
-  const role = (cycle + 2) % leadPool === lead ? "SUCCESSOR" : "FOLLOWER";
   const fenced = "higher epoch seen; stays silent";
   return [
-    scripted(0, lead, epoch, "FENCED", "STATE_CHANGE", fenced),
-    scripted(rejoinAfterMs, lead, epoch + 1, role, "STATE_CHANGE", "rejoined"),
+    scripted(0, node, staleEpoch, "FENCED", "STATE_CHANGE", fenced),
+    scripted(DEMO_TIMING.rejoinAfterMs, node, epoch, role, "STATE_CHANGE", "rejoined"),
   ];
 }
