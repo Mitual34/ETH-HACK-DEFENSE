@@ -1,0 +1,155 @@
+/* Handover timer, node cards and event log. Colours come from styles.css. */
+
+.banner {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.banner[data-status="running"] {
+  color: var(--danger);
+}
+
+.banner[data-status="complete"] {
+  color: var(--lead);
+  animation: blink 800ms ease-in-out 1;
+}
+
+/* The TALOS Blink: two soft pulses, never fully dark. */
+@keyframes blink {
+  0%,
+  50%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner[data-status="complete"] {
+    animation: none;
+  }
+}
+
+.timer {
+  font-size: 3.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stages {
+  max-width: 420px;
+}
+
+.stage-value,
+.log-time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.nodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.node {
+  display: grid;
+  gap: 4px;
+  border-left: 4px solid var(--muted);
+}
+
+.node-id {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.node-state {
+  font-weight: 600;
+}
+
+.node-epoch,
+.node-stale {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.node-stale {
+  color: var(--successor);
+}
+
+.node[data-state="LEAD"] {
+  border-left-color: var(--lead);
+}
+
+.node[data-state="SUCCESSOR"] {
+  border-left-color: var(--successor);
+}
+
+.node[data-state="FOLLOWER"] {
+  border-left-color: var(--ok);
+}
+
+.node[data-state="ISOLATED"] {
+  border-left-color: var(--danger);
+}
+
+.node[data-state="FENCED"],
+.node[data-state="YIELD"] {
+  border-left-color: var(--fenced);
+}
+
+.node[data-state="LEAD"] .node-state,
+.log tr[data-state="LEAD"] .log-state {
+  color: var(--lead);
+}
+
+.log-scroll {
+  max-height: 420px;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.log th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+
+.log-reason {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}

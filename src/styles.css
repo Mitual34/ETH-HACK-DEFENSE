@@ -1,0 +1,136 @@
+/* Night Ops palette: dark, low glare, colour reserved for state. */
+:root {
+  --bg: #0b0f14;
+  --panel: #131a22;
+  --line: #243040;
+  --text: #d7dee7;
+  --muted: #8493a5;
+  --lead: #4da3ff;
+  --successor: #e0b341;
+  --ok: #5fbf8f;
+  --danger: #ff5d5d;
+  --fenced: #b48cf2;
+  --gap: 16px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  padding: var(--gap);
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.4rem;
+  letter-spacing: 0.12em;
+}
+
+h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+}
+
+.pill {
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.pill[data-status="open"] {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.pill[data-status="closed"] {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.pill[data-status="demo"],
+.notice {
+  border-color: var(--successor);
+  color: var(--successor);
+}
+
+.notice {
+  margin-top: var(--gap);
+  padding: 8px 12px;
+  border: 1px dashed var(--successor);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+main {
+  display: grid;
+  gap: var(--gap);
+  margin-top: var(--gap);
+}
+
+section,
+.tile {
+  min-width: 0;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--gap);
+}
+
+.tile,
+.handover,
+.node {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: var(--gap);
+}
+
+.big {
+  font-size: 2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.alarm {
+  margin-top: 8px;
+  color: var(--danger);
+  font-weight: 600;
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'"
+    />
+    <title>TALOS dashboard</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/panels.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>TALOS <span class="subtitle">swarm handover, observed</span></h1>
+      <p id="connection" class="pill" data-status="connecting">Connecting to relay</p>
+    </header>
+
+    <p id="demo-notice" class="notice" hidden>
+      Demo data. Timings on this screen are scripted, not measured.
+    </p>
+
+    <main>
+      <section class="summary" aria-label="Swarm summary">
+        <div class="tile">
+          <h2>Epoch</h2>
+          <p id="epoch" class="big">0</p>
+        </div>
+        <div class="tile">
+          <h2>Lead</h2>
+          <p id="lead" class="big">none</p>
+          <p id="lead-alarm" class="alarm" role="alert" hidden>
+            More than one node reports LEAD at this epoch
+          </p>
+        </div>
+        <div class="tile">
+          <h2>Dropped packets</h2>
+          <p><span id="malformed">0</span> malformed</p>
+          <p><span id="stale">0</span> out of order</p>
+        </div>
+      </section>
+
+      <section class="handover" aria-label="Handover timer">
+        <p id="banner" class="banner" data-status="idle" aria-live="polite">No handover observed</p>
+        <p id="timer" class="timer">&mdash;</p>
+        <p id="timer-note" class="note">Waiting for a FEED_LOSS event</p>
+        <table class="stages">
+          <thead>
+            <tr>
+              <th scope="col">Stage</th>
+              <th scope="col">Duration</th>
+            </tr>
+          </thead>
+          <tbody id="stages"></tbody>
+        </table>
+      </section>
+
+      <section aria-label="Node states">
+        <h2>Nodes</h2>
+        <ul id="nodes" class="nodes"></ul>
+      </section>
+
+      <section aria-label="Event log">
+        <h2>Event log</h2>
+        <div class="log-scroll">
+          <table class="log">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Node</th>
+                <th scope="col">Epoch</th>
+                <th scope="col">State</th>
+                <th scope="col">Event</th>
+                <th scope="col">Reason</th>
+              </tr>
+            </thead>
+            <tbody id="log"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
