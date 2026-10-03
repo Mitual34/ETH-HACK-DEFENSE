@@ -28,14 +28,20 @@ in `src/guideSteps.ts`.
 ## Cameras and the DESTROY button
 
 Plug in two or more USB cameras and allow camera access when the browser asks.
-Camera 1 is DRONE 1, camera 2 is DRONE 2, and so on, and the pilot screen shows
-that name in large letters over the picture. It shows the camera of whichever
-node the system says is lead. In the demo only drones that have a feed take turns
-as lead, so with two cameras the lead alternates between DRONE 1 and DRONE 2 and
-the other nodes stay followers.
+Every drone has a tile on the feed wall, all visible at once and each named in
+large letters. Camera 1 is DRONE 1, camera 2 is DRONE 2, and so on. A drone with
+no camera says CAMERA NOT AVAILABLE. Each tile carries a status:
 
-Press **DESTROY** to lose the lead. The screen goes to FEED LOST, the handover
-runs, and when the new lead is named the screen switches to its camera. The
+- **PILOT VIEW**: the lead, framed in amber. This is what the pilot sees.
+- **STANDBY**: a working camera that is not the lead.
+- **NOT AVAILABLE**: no camera for this drone.
+- **FEED LOST**: the lead that was just destroyed, until the next one takes over.
+
+In the demo only drones with a working camera take turns as lead, so with two
+cameras the lead alternates between DRONE 1 and DRONE 2 and the rest follow.
+
+Press **DESTROY** to lose the lead. Its tile goes to FEED LOST, the handover
+runs, and when the new lead is named the pilot view moves to its tile. The
 switch time is shown in milliseconds, split in two:
 
 - **decision**: from the press until the system names the new lead. In demo mode
@@ -44,8 +50,8 @@ switch time is shown in milliseconds, split in two:
   screen. This is measured on this screen, every time.
 
 All cameras stay open at once, so the switch never waits for a camera to start.
-With fewer than two cameras, or if access is refused, placeholders are shown and
-everything else still works. If two USB cameras will not open together, lower
+If access is refused every tile says CAMERA NOT AVAILABLE and everything else
+still works. If two USB cameras will not open together, lower
 `VITE_TALOS_FEED_WIDTH` and `VITE_TALOS_FEED_HEIGHT`.
 
 Camera access needs `localhost` or HTTPS. With a live relay the DESTROY button is
@@ -111,7 +117,7 @@ src/transport.ts    event source interface + WebSocket source
 src/demo*.ts        scripted demo source and its controls
 src/guide*.ts       guided demo: steps and the thread that walks through them
 src/cameras.ts      opens the USB cameras as feed slots
-src/feedView.ts     pilot screen: follows the lead, never picks the feed
+src/feedView.ts     feed wall: follows the lead, never picks the feed
 src/switchTimer.ts  times a feed switch in milliseconds
 src/frames.ts       detects the first frame of a switched feed
 src/clock.ts        clock and scheduler interfaces

@@ -45,12 +45,10 @@ function startFeed(): Harness {
   return { timeline, elements, feed, observe, presentFrame: () => pending.shift()?.() };
 }
 
-/** Which feed surfaces are visible, by position: [0] means only the first camera. */
-function activeFeeds(elements: DashboardElements): number[] {
-  const surfaces = Array.from(elements.feedScreen.querySelectorAll(".feed-surface"));
-  return surfaces.flatMap((surface, index) =>
-    surface.getAttribute("data-active") === "true" ? [index] : [],
-  );
+/** The status shown on each tile, in drone order. Every tile is always on screen. */
+function tileStatuses(elements: DashboardElements): (string | null)[] {
+  const statuses = elements.feedScreen.querySelectorAll(".feed-tile-status");
+  return Array.from(statuses).map((status) => status.textContent);
 }
 
 function bootTwoNodes({ observe, presentFrame }: Harness): void {
@@ -60,12 +58,13 @@ function bootTwoNodes({ observe, presentFrame }: Harness): void {
 }
 
 describe("FeedView", () => {
-  it("shows the camera of the lead and reports no switch time before anything is destroyed", () => {
+  it("shows every drone at once, marks the lead as the pilot view and says which have no camera", () => {
     const harness = startFeed();
     bootTwoNodes(harness);
-    expect(activeFeeds(harness.elements)).toEqual([0]);
-    expect(harness.elements.feedBadge.textContent).toBe("DRONE 1");
-    expect(harness.elements.feedSource.textContent).toBe("NO CAMERA");
+    const { feedScreen } = harness.elements;
+    expect(tileStatuses(harness.elements)).toEqual(["PILOT VIEW", "NOT AVAILABLE"]);
+    expect(feedScreen.querySelector(".feed-tile-label")?.textContent).toBe("DRONE 1");
+    expect(feedScreen.querySelector(".feed-placeholder")?.textContent).toBe("CAMERA NOT AVAILABLE");
     expect(harness.elements.switchTime.textContent).toBe("");
   });
 
@@ -74,22 +73,20 @@ describe("FeedView", () => {
     const { timeline, elements, feed, observe, presentFrame } = harness;
     bootTwoNodes(harness);
     feed.noteDestroyPressed();
-    expect(activeFeeds(elements)).toEqual([0]);
+    expect(tileStatuses(elements)).toEqual(["PILOT VIEW", "NOT AVAILABLE"]);
     timeline.advance(5);
     observe({ timestamp: 100, node_id: "D1", epoch: 1, state: "LEAD", event: "FEED_LOSS" });
-    expect(activeFeeds(elements)).toEqual([]);
-    expect(elements.feedLost.hidden).toBe(false);
+    expect(tileStatuses(elements)).toEqual(["FEED LOST", "NOT AVAILABLE"]);
     expect(elements.destroy.hasAttribute("disabled")).toBe(true);
     timeline.advance(400);
     observe({ timestamp: 500, node_id: "D2", epoch: 2, state: "LEAD", event: "LEASE_ACQUIRED" });
-    expect(activeFeeds(elements)).toEqual([]);
+    expect(tileStatuses(elements)).toEqual(["FEED LOST", "NOT AVAILABLE"]);
     observe({ timestamp: 550, node_id: "D2", epoch: 2, state: "LEAD", event: "FEED_DETECTED" });
-    expect(activeFeeds(elements)).toEqual([1]);
+    expect(tileStatuses(elements)).toEqual(["NOT AVAILABLE", "PILOT VIEW"]);
     timeline.advance(12.5);
     presentFrame();
     expect(elements.switchTime.textContent).toBe("417.5 ms");
     expect(elements.switchNote.textContent).toBe("decision 405.0 ms + picture 12.5 ms");
-    expect(elements.feedBadge.textContent).toBe("DRONE 2");
     expect(elements.destroy.hasAttribute("disabled")).toBe(false);
   });
 

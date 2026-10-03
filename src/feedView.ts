@@ -1,33 +1,40 @@
 /**
- * The pilot's screen. It shows the feed of whichever node the system says is
- * lead, and nothing while a handover is running. It follows the swarm's
- * decision; it never picks the feed itself.
+ * The feed wall. Every drone's camera is on screen at once, each in its own
+ * labelled tile, and the tile of whichever node the system says is lead is
+ * marked as the pilot's view. It follows the swarm's decision; it never picks
+ * the feed itself.
  */
 
 import type { FeedSlot } from "./cameras";
-import type { DashboardElements } from "./dom";
+import { make, type DashboardElements } from "./dom";
 import type { FrameWaiter } from "./frames";
 import { handoverStatus } from "./handover";
 import { leadsAtCurrentEpoch, type DashboardState } from "./store";
 import type { SwitchResult, SwitchTimer } from "./switchTimer";
 
 const MS_DIGITS = 1;
-const LOST_TEXT = "FEED LOST";
-const PULSE_CLASS = "pulse";
-const LIVE_TEXT = "LIVE CAMERA";
-const NO_CAMERA_TEXT = "NO CAMERA";
+const NO_TILE = -1;
+const NO_CAMERA_TEXT = "CAMERA NOT AVAILABLE";
+const STATUS = {
+  pilot: "PILOT VIEW",
+  standby: "STANDBY",
+  unavailable: "NOT AVAILABLE",
+  lost: "FEED LOST",
+} as const;
+
+interface Tile {
+  root: HTMLElement;
+  surface: HTMLElement;
+  status: HTMLElement;
+  available: boolean;
+}
 
 function formatMs(ms: number): string {
   return `${ms.toFixed(MS_DIGITS)} ms`;
 }
 
 function createSurface(slot: FeedSlot): HTMLElement {
-  if (slot.stream === null) {
-    const placeholder = document.createElement("div");
-    placeholder.className = "feed-surface feed-placeholder";
-    placeholder.textContent = NO_CAMERA_TEXT;
-    return placeholder;
-  }
+  if (slot.stream === null) return make("div", "feed-surface feed-placeholder", NO_CAMERA_TEXT);
   const video = document.createElement("video");
   video.className = "feed-surface";
   video.autoplay = true;
@@ -35,6 +42,22 @@ function createSurface(slot: FeedSlot): HTMLElement {
   video.playsInline = true;
   video.srcObject = slot.stream;
   return video;
+}
+
+function createTile(slot: FeedSlot): Tile {
+  const available = slot.stream !== null;
+  const root = make("div", "feed-tile", "");
+  const surface = createSurface(slot);
+  const status = make("p", "feed-tile-status", "");
+  root.dataset["available"] = String(available);
+  root.append(surface, make("p", "feed-tile-label", slot.label), status);
+  return { root, surface, status, available };
+}
+
+function statusText(tile: Tile, isPilot: boolean, isLost: boolean): string {
+  if (isLost) return STATUS.lost;
+  if (isPilot) return STATUS.pilot;
+  return tile.available ? STATUS.standby : STATUS.unavailable;
 }
 
 /** Position of the lead among the nodes, in numeric id order: D1 is 0, D2 is 1. */
@@ -46,10 +69,10 @@ function leadPosition(state: DashboardState, lead: string): number {
 }
 
 export class FeedView {
-  private slots: FeedSlot[] = [];
-  private surfaces: HTMLElement[] = [];
+  private tiles: Tile[] = [];
   private shownLead: string | null = null;
   private shownPosition = 0;
+  private lostIndex = NO_TILE;
 
   constructor(
     private readonly elements: DashboardElements,
@@ -59,11 +82,9 @@ export class FeedView {
 
   /** Replaces the feeds, for example when the cameras finish opening. */
   setSlots(slots: FeedSlot[]): void {
-    this.surfaces.forEach((surface) => surface.remove());
-    this.slots = slots;
-    this.surfaces = slots.map(createSurface);
-    this.elements.feedScreen.prepend(...this.surfaces);
-    this.activate();
+    this.tiles = slots.map(createTile);
+    this.elements.feedScreen.replaceChildren(...this.tiles.map((tile) => tile.root));
+    this.renderTiles();
   }
 
   noteDestroyPressed(): void {
@@ -75,59 +96,51 @@ export class FeedView {
     const running = handoverStatus(state.handover) === "running";
     const lead = running ? null : (leadsAtCurrentEpoch(state)[0] ?? null);
     if (lead === this.shownLead) return;
-    this.shownLead = lead;
     if (lead === null) {
+      this.lostIndex = this.pilotIndex();
+      this.shownLead = null;
       this.timer.start();
-      this.showLost();
+      this.renderTiles();
     } else {
+      this.shownLead = lead;
       this.shownPosition = leadPosition(state, lead);
-      this.showLead(lead);
+      this.lostIndex = NO_TILE;
+      this.showPilot();
     }
     this.renderDestroy();
   }
 
-  private showLost(): void {
-    this.elements.feedLost.textContent = LOST_TEXT;
-    this.elements.feedLost.hidden = false;
-    this.activate();
+  private pilotIndex(): number {
+    const count = this.tiles.length;
+    return this.shownLead === null || count === 0 ? NO_TILE : this.shownPosition % count;
   }
 
-  private showLead(lead: string): void {
-    this.elements.feedLost.hidden = true;
-    const surface = this.activate(lead);
+  private showPilot(): void {
+    const tile = this.renderTiles();
     this.timer.command();
-    if (surface === undefined) this.report(this.timer.finish());
-    else this.waitForFrame(surface, () => this.report(this.timer.finish()));
+    if (tile === undefined) this.report(this.timer.finish());
+    else this.waitForFrame(tile.surface, () => this.report(this.timer.finish()));
   }
 
-  /**
-   * Shows the surface for the current lead, or none while the feed is lost.
-   * The badge names the drone the feed stands in for; a lead with no feed of
-   * its own keeps its node id, so the label never claims the wrong drone.
-   */
-  private activate(lead: string | null = this.shownLead): HTMLElement | undefined {
-    const count = this.surfaces.length;
-    const index = lead === null || count === 0 ? -1 : this.shownPosition % count;
-    const slot = this.slots[index];
-    const ownFeed = this.shownPosition < count;
-    this.surfaces.forEach((surface, position) => {
-      surface.dataset["active"] = String(position === index);
+  /** Marks the pilot's tile, the lost tile and the rest. Returns the pilot's tile, if any. */
+  private renderTiles(): Tile | undefined {
+    const pilot = this.pilotIndex();
+    this.tiles.forEach((tile, index) => {
+      const isPilot = index === pilot;
+      const isLost = index === this.lostIndex;
+      tile.root.dataset["pilot"] = String(isPilot);
+      tile.root.dataset["lost"] = String(isLost);
+      tile.status.textContent = statusText(tile, isPilot, isLost);
     });
-    this.elements.feedBadge.textContent = slot !== undefined && ownFeed ? slot.label : (lead ?? "");
-    this.elements.feedSource.textContent =
-      slot === undefined ? "" : slot.stream === null ? NO_CAMERA_TEXT : LIVE_TEXT;
-    return this.surfaces[index];
+    return this.tiles[pilot];
   }
 
   private report(result: SwitchResult | null): void {
     this.renderDestroy();
     if (result === null) return;
-    const { switchTime, switchNote, feedBadge } = this.elements;
+    const { switchTime, switchNote } = this.elements;
     switchTime.textContent = formatMs(result.totalMs);
     switchNote.textContent = `decision ${formatMs(result.decisionMs)} + picture ${formatMs(result.pictureMs)}`;
-    feedBadge.classList.remove(PULSE_CLASS);
-    void feedBadge.offsetWidth;
-    feedBadge.classList.add(PULSE_CLASS);
   }
 
   /** One switch at a time: the button waits until the last one is on screen. */

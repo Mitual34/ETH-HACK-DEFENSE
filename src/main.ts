@@ -25,18 +25,19 @@ interface Runtime {
 }
 
 /**
- * Starts with placeholders so the screen works at once, then swaps in the cameras.
- * onFeeds is told how many feeds there are, each time that is known.
+ * Shows one tile per drone at once: placeholders first so the screen works
+ * immediately, then the cameras. onCameras is told how many drones have a
+ * working camera, each time that is known.
  */
-function createFeed(runtime: Runtime, onFeeds: (count: number) => void): FeedView {
+function createFeed(runtime: Runtime, tiles: number, onCameras: (count: number) => void): FeedView {
   const { config, clock, scheduler, elements } = runtime;
   const waitForFrame = createFrameWaiter(scheduler, config.frameTimeoutMs);
   const feed = new FeedView(elements, new SwitchTimer(clock), waitForFrame);
   const useSlots = (slots: FeedSlot[]): void => {
-    feed.setSlots(slots);
-    onFeeds(slots.length);
+    feed.setSlots(padSlots(slots, tiles));
+    onCameras(slots.filter((slot) => slot.stream !== null).length);
   };
-  useSlots(padSlots([], config.minFeeds));
+  useSlots([]);
   void openCameraSlots(navigator.mediaDevices, config).then(useSlots);
   return feed;
 }
@@ -53,7 +54,7 @@ function createObserver(runtime: Runtime, feed: FeedView): (state: DashboardStat
 /** A live relay: every panel at once, no guide, and no DESTROY because the dashboard cannot send. */
 function startLive(runtime: Runtime): void {
   const { config, scheduler, elements } = runtime;
-  const feed = createFeed(runtime, () => undefined);
+  const feed = createFeed(runtime, config.minFeeds, () => undefined);
   const { websocketUrl, reconnectDelayMs } = config;
   const source = new WebSocketSource(websocketUrl, reconnectDelayMs, scheduler, openBrowserSocket);
   elements.destroy.hidden = true;
@@ -62,12 +63,13 @@ function startLive(runtime: Runtime): void {
 
 /**
  * The demo: DESTROY loses the scripted lead, and the guide walks through what happens.
- * Only drones that have a feed take turns as lead, so the screen always shows its own drone.
+ * Every drone has a tile; only drones with a working camera take turns as lead.
  */
 function startDemo(runtime: Runtime): void {
   const { config, clock, scheduler, elements } = runtime;
   const source = new DemoSource(config.demoNodeCount, clock, scheduler);
-  const feed = createFeed(runtime, (count) => source.setLeadPool(count));
+  const tiles = Math.max(config.minFeeds, config.demoNodeCount);
+  const feed = createFeed(runtime, tiles, (cameras) => source.setLeadPool(cameras));
   const screen = {
     panels: findPanels(document),
     anchors: findAnchors(document),
