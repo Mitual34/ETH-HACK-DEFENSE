@@ -2,7 +2,13 @@
 
 import type { DemoControls } from "./demo";
 import type { DashboardElements } from "./dom";
-import { FINISHED_PLACEMENT, type AnchorName, type GuideSide, type GuideStep } from "./guideSteps";
+import {
+  FINISHED_PLACEMENT,
+  type AnchorName,
+  type GuideActionName,
+  type GuideSide,
+  type GuideStep,
+} from "./guideSteps";
 
 const LABEL = "First principles";
 const NEXT_LABEL = "Next";
@@ -40,8 +46,17 @@ export class Guide {
     this.render();
   }
 
+  /** For a step that waits on a control outside the thread, such as the DESTROY button. */
+  completeAction(name: GuideActionName): void {
+    if (this.finished || this.steps[this.index]?.waitFor !== name) return;
+    this.actionsDone.add(this.index);
+    this.render();
+  }
+
   private isBlocked(): boolean {
-    return this.steps[this.index]?.action !== undefined && !this.actionsDone.has(this.index);
+    const step = this.steps[this.index];
+    const needsAction = step?.action !== undefined || step?.waitFor !== undefined;
+    return needsAction && !this.actionsDone.has(this.index);
   }
 
   private isLast(): boolean {

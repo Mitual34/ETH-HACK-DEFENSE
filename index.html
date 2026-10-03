@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:"
     />
     <title>TALOS dashboard</title>
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="stylesheet" href="/src/panels.css" />
     <link rel="stylesheet" href="/src/guide.css" />
+    <link rel="stylesheet" href="/src/feed.css" />
   </head>
   <body>
     <header class="top">
@@ -22,7 +23,7 @@
     </header>
 
     <p id="demo-notice" class="notice" hidden>
-      Simulated demonstration &middot; timings are scripted, not measured
+      Simulated demonstration &middot; decision delay is scripted, picture switch is measured
     </p>
 
     <section id="guide" class="guide" aria-label="Guided demo" hidden>
@@ -38,6 +39,20 @@
     </section>
 
     <main>
+      <section class="feed" data-panel="feed" data-anchor="feed" aria-label="Pilot feed">
+        <div id="feed-screen" class="feed-screen">
+          <p id="feed-lost" class="feed-lost" role="alert">WAITING FOR LEAD</p>
+          <p id="feed-badge" class="feed-badge"></p>
+          <p id="feed-source" class="feed-source"></p>
+        </div>
+        <div class="feed-side">
+          <button id="destroy" class="destroy" type="button">DESTROY</button>
+          <h2>Feed switch</h2>
+          <p id="switch-time" class="switch-time telemetry" aria-live="polite">&mdash;</p>
+          <p id="switch-note" class="switch-note">press DESTROY to time a switch</p>
+        </div>
+      </section>
+
       <section class="summary" data-anchor="summary" aria-label="Swarm summary">
         <div class="tile" data-panel="epoch">
           <h2>Epoch</h2>

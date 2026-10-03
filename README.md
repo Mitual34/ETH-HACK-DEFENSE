@@ -25,7 +25,28 @@ steps ask the viewer to press a button (lose the lead, bring it back). "Skip the
 guide" or the last step reveals every panel and loops the scenario. The steps live
 in `src/guideSteps.ts`.
 
-**Timings shown in demo mode are scripted, not measured**, and the page says so.
+## Cameras and the DESTROY button
+
+Plug in two or more USB cameras and allow camera access when the browser asks.
+Camera 1 stands in for drone 1, camera 2 for drone 2, and so on. The pilot screen
+shows the camera of whichever node the system says is lead.
+
+Press **DESTROY** to lose the lead. The screen goes to FEED LOST, the handover
+runs, and when the new lead is named the screen switches to its camera. The
+switch time is shown in milliseconds, split in two:
+
+- **decision**: from the press until the system names the new lead. In demo mode
+  this is the scripted handover delay, not a measurement of a real swarm.
+- **picture**: from that moment until the first frame of the new camera is on
+  screen. This is measured on this screen, every time.
+
+All cameras stay open at once, so the switch never waits for a camera to start.
+With fewer than two cameras, or if access is refused, placeholders are shown and
+everything else still works. If two USB cameras will not open together, lower
+`VITE_TALOS_FEED_WIDTH` and `VITE_TALOS_FEED_HEIGHT`.
+
+Camera access needs `localhost` or HTTPS. With a live relay the DESTROY button is
+hidden, because the dashboard cannot send anything to the swarm.
 
 To read a real ground relay, copy `.env.example` to `.env` and set:
 
@@ -81,7 +102,11 @@ src/handover.ts     handover timer (pure functions)
 src/store.ts        observed state (pure functions)
 src/transport.ts    event source interface + WebSocket source
 src/demo*.ts        scripted demo source and its controls
-src/guide*.ts       guided demo: steps and the card that walks through them
+src/guide*.ts       guided demo: steps and the thread that walks through them
+src/cameras.ts      opens the USB cameras as feed slots
+src/feedView.ts     pilot screen: follows the lead, never picks the feed
+src/switchTimer.ts  times a feed switch in milliseconds
+src/frames.ts       detects the first frame of a switched feed
 src/clock.ts        clock and scheduler interfaces
 src/fakes.ts        fakes of every interface, for tests
 src/render.ts       DOM rendering (textContent only)

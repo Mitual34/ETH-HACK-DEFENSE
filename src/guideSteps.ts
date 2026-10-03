@@ -4,8 +4,8 @@
  * placed next to the panel it explains.
  */
 
-export type PanelName = "epoch" | "lead" | "dropped" | "handover" | "stages" | "nodes" | "log";
-export type AnchorName = "summary" | "handover" | "stages" | "nodes";
+export type PanelName = "feed" | "epoch" | "lead" | "dropped" | "handover" | "stages" | "nodes" | "log";
+export type AnchorName = "feed" | "summary" | "handover" | "stages" | "nodes";
 export type GuideSide = "above" | "below";
 export type GuideActionName = "loseLead" | "restoreLead";
 
@@ -18,6 +18,8 @@ export interface GuideStep {
   side: GuideSide;
   /** A step with an action cannot be passed until the viewer has pressed it. */
   action?: { label: string; run: GuideActionName };
+  /** Like action, but the viewer presses a control on the screen itself, not in the thread. */
+  waitFor?: GuideActionName;
 }
 
 /** Where the thread rests once the guide is finished. */
@@ -31,8 +33,8 @@ export const GUIDE_STEPS: readonly GuideStep[] = [
     question: "What is the problem?",
     answer:
       "The pilot sees through one drone's camera: the lead. If the lead is lost, the pilot is blind.",
-    show: ["nodes"],
-    anchor: "nodes",
+    show: ["feed", "nodes"],
+    anchor: "feed",
     side: "below",
   },
   {
@@ -54,11 +56,11 @@ export const GUIDE_STEPS: readonly GuideStep[] = [
   {
     question: "How does the swarm know the lead is gone?",
     answer:
-      "A lost drone cannot say so. Each drone sends a steady heartbeat, and several missed in a row can only mean it is gone.",
-    show: ["nodes", "handover"],
-    anchor: "handover",
+      "A lost drone cannot say so. Each drone sends a steady heartbeat; several missed in a row mean it is gone. Press DESTROY and watch the feed.",
+    show: ["feed", "nodes"],
+    anchor: "feed",
     side: "below",
-    action: { label: "Lose the lead", run: "loseLead" },
+    waitFor: "loseLead",
   },
   {
     question: "What stops two drones both taking over?",
@@ -80,8 +82,8 @@ export const GUIDE_STEPS: readonly GuideStep[] = [
   {
     question: "How do we know it worked?",
     answer:
-      "One number: how long the pilot was dark. Every stage is timed, and the total is the result. In this demo the timings are scripted, not measured.",
-    show: ["handover", "stages"],
+      "One number: how long the pilot was dark. In this demo the decision delay is scripted; the picture switch is measured on this screen.",
+    show: ["feed", "handover", "stages"],
     anchor: "stages",
     side: "above",
   },

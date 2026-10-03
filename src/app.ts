@@ -15,6 +15,8 @@ export interface AppDependencies {
   clock: Clock;
   scheduler: Scheduler;
   elements: DashboardElements;
+  /** Told about every new state, for views the app does not draw itself. */
+  onState?: (state: DashboardState) => void;
 }
 
 export class DashboardApp {
@@ -73,6 +75,7 @@ export class DashboardApp {
     renderNodes(elements, this.state);
     renderHandover(elements, this.state.handover, clock.now());
     renderLog(elements, this.state.log);
+    this.dependencies.onState?.(this.state);
   }
 
   /** Redraws only the timer, so a running handover counts up between events. */

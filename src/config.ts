@@ -13,6 +13,11 @@ export interface DashboardConfig {
   maxNodeIdLength: number;
   malformedLogEvery: number;
   demoNodeCount: number;
+  maxFeeds: number;
+  minFeeds: number;
+  feedWidth: number;
+  feedHeight: number;
+  frameTimeoutMs: number;
 }
 
 export const DEFAULT_CONFIG: DashboardConfig = {
@@ -26,6 +31,11 @@ export const DEFAULT_CONFIG: DashboardConfig = {
   maxNodeIdLength: 16,
   malformedLogEvery: 100,
   demoNodeCount: 5,
+  maxFeeds: 4,
+  minFeeds: 2,
+  feedWidth: 1280,
+  feedHeight: 720,
+  frameTimeoutMs: 1000,
 };
 
 export const MIN_DEMO_NODE_COUNT = 2;
@@ -63,5 +73,10 @@ export function loadConfig(env: Environment): DashboardConfig {
     maxNodeIdLength: positiveInteger(env["VITE_TALOS_MAX_NODE_ID_LENGTH"], defaults.maxNodeIdLength),
     malformedLogEvery: positiveInteger(env["VITE_TALOS_MALFORMED_LOG_EVERY"], defaults.malformedLogEvery),
     demoNodeCount: Math.max(demoNodeCount, MIN_DEMO_NODE_COUNT),
+    maxFeeds: positiveInteger(env["VITE_TALOS_MAX_FEEDS"], defaults.maxFeeds),
+    minFeeds: positiveInteger(env["VITE_TALOS_MIN_FEEDS"], defaults.minFeeds),
+    feedWidth: positiveInteger(env["VITE_TALOS_FEED_WIDTH"], defaults.feedWidth),
+    feedHeight: positiveInteger(env["VITE_TALOS_FEED_HEIGHT"], defaults.feedHeight),
+    frameTimeoutMs: positiveInteger(env["VITE_TALOS_FRAME_TIMEOUT_MS"], defaults.frameTimeoutMs),
   };
 }

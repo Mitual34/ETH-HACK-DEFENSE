@@ -8,7 +8,8 @@ import { applyEvent, initialState, leadsAtCurrentEpoch, type DashboardState } fr
 import { parseSwarmEvent } from "../src/validate";
 import { LIMITS, mountShell } from "./helpers";
 
-const PANEL_NAMES: PanelName[] = ["epoch", "lead", "dropped", "handover", "stages", "nodes", "log"];
+const PANEL_NAMES: PanelName[] = ["feed", "epoch", "lead", "dropped", "handover", "stages", "nodes", "log"];
+const WAIT_STEP = GUIDE_STEPS.findIndex((step) => step.waitFor !== undefined);
 const ACTION_STEP = GUIDE_STEPS.findIndex((step) => step.action !== undefined);
 const MAX_WORDS_PER_ANSWER = 30;
 const SETTLE_MS = 10_000;
@@ -17,6 +18,7 @@ interface Harness {
   elements: DashboardElements;
   panels: HTMLElement[];
   calls: string[];
+  guide: Guide;
 }
 
 function startGuide(): Harness {
@@ -36,8 +38,9 @@ function startGuide(): Harness {
     restoreLead: () => calls.push("restoreLead"),
     freeRun: () => calls.push("freeRun"),
   };
-  new Guide(elements, { panels, anchors }, GUIDE_STEPS, controls).start();
-  return { elements, panels, calls };
+  const guide = new Guide(elements, { panels, anchors }, GUIDE_STEPS, controls);
+  guide.start();
+  return { elements, panels, calls, guide };
 }
 
 function visible(panels: HTMLElement[]): string[] {
@@ -53,13 +56,13 @@ describe("Guide", () => {
     const { elements, panels } = startGuide();
     expect(elements.guideProgress.textContent).toBe(`First principles · 1 of ${GUIDE_STEPS.length}`);
     expect(elements.guideQuestion.textContent).toBe("What is the problem?");
-    expect(visible(panels)).toEqual(["nodes"]);
+    expect(visible(panels)).toEqual(["feed", "nodes"]);
   });
 
   it("moves the thread next to the part of the screen each step explains", () => {
     const { elements, panels } = startGuide();
     const nodes = panels[PANEL_NAMES.indexOf("nodes")]!;
-    expect(elements.guide.previousElementSibling).toBe(nodes);
+    expect(elements.guide.previousElementSibling).toBe(panels[PANEL_NAMES.indexOf("feed")]);
     expect(elements.guide.dataset["side"]).toBe("below");
     clickNext(elements, 2);
     expect(elements.guide.nextElementSibling).toBe(nodes);
@@ -67,12 +70,16 @@ describe("Guide", () => {
   });
 
   it("holds the viewer on an action step until the action is pressed, and runs it once", () => {
-    const { elements, calls } = startGuide();
-    clickNext(elements, ACTION_STEP + 3);
+    const { elements, calls, guide } = startGuide();
+    clickNext(elements, GUIDE_STEPS.length);
+    expect(elements.guideProgress.textContent).toContain(`${WAIT_STEP + 1} of`);
+    expect(elements.guideAction.hidden).toBe(true);
+    guide.completeAction("loseLead");
+    clickNext(elements, GUIDE_STEPS.length);
     expect(elements.guideProgress.textContent).toContain(`${ACTION_STEP + 1} of`);
     elements.guideAction.click();
     elements.guideAction.click();
-    expect(calls).toEqual(["loseLead"]);
+    expect(calls).toEqual(["restoreLead"]);
     clickNext(elements, 1);
     expect(elements.guideProgress.textContent).toContain(`${ACTION_STEP + 2} of`);
   });
