@@ -16,6 +16,7 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
   const startedAt = performance.now();
   let cameraReady = false;
   let handoffPending = false;
+  let warmVideo: HTMLVideoElement | null = null;
   const surfaces = new Map<string, HTMLVideoElement>();
   const cards = new Map<string, { root: HTMLElement; role: HTMLElement; telemetry: HTMLElement }>();
 
@@ -61,6 +62,11 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
   }
 
   function render(): void {
+    if (simulation.drones[0]!.online) {
+      const warmId = simulation.successorId!;
+      standbyLabel.textContent = `${warmId} · WEBCAM 2 · SLOT 2`;
+      if (warmVideo) warmVideo.dataset["droneId"] = warmId;
+    }
     renderSummary(elements, state);
     renderHandover(elements, state.handover, performance.now());
     renderLog(elements, state.log);
@@ -82,17 +88,21 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
     });
     elements.nodes.replaceChildren(...rows);
     elements.demoHint.textContent = handoffPending
-      ? "D1 offline. Slot 1 is black while D2 stays warm for the timed handoff."
+      ? `D1 offline. Slot 1 is black while ${simulation.leadId} stays warm for the timed handoff.`
       : simulation.drones[0]!.online
-      ? cameraReady ? "D2 is playing in slot 2 and ready to take over. KILL D1 promotes the cached successor."
+      ? cameraReady ? `${simulation.successorId} is the warm successor. D2 and D3 alternate every 10 seconds. KILL D1 promotes the cached successor.`
         : "Allow camera access to warm both live webcam feeds."
-      : `D1 offline. D2 leads in slot 1. ${simulation.successorId} is the next successor (telemetry only).`;
+      : `D1 offline. ${simulation.leadId} leads in slot 1. ${simulation.successorId} is the next successor.`;
   }
 
   publishRoles("Five-drone local simulation initialized; successor cached");
   render();
   const telemetryTimer = window.setInterval(() => {
-    simulation.updateTelemetry();
+    const previousSuccessor = simulation.successorId;
+    simulation.updateTelemetry(performance.now() - startedAt);
+    if (simulation.successorId !== previousSuccessor) {
+      publishRoles(`Linear telemetry ranking selected ${simulation.successorId} as warm successor`);
+    }
     render();
   }, 1000);
 
@@ -108,6 +118,8 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
         elements.pilotScreen.prepend(video);
         elements.pilotLost.hidden = true;
       } else {
+        // Webcam 2 represents the ranked simulated successor, D2 or D3.
+        warmVideo = video;
         standbyPlaceholder.remove();
         standby.prepend(video);
       }
@@ -121,7 +133,7 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
     cameraReady = surfaces.size === 2;
     standbyStatus.textContent = cameraReady ? "SUCCESSOR · WARM / PLAYING" : "CAMERA NOT AVAILABLE";
     elements.destroy.toggleAttribute("disabled", !cameraReady);
-    event("D2", "SUCCESSOR", "STATE_CHANGE", "Both device-bound webcams playing; D2 successor warm");
+    event(simulation.successorId!, "SUCCESSOR", "STATE_CHANGE", "Both device-bound webcams playing; selected successor warm");
     render();
   }).catch((error: unknown) => {
     elements.demoHint.textContent = `Camera startup: ${String(error)}`;
@@ -137,23 +149,23 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
     epoch += 1;
     event(promoted, "LEAD", "FAILURE_DETECTED", "Offline lead bypasses retention hysteresis");
     publishRoles("D1 offline; cached successor allocated; display handoff pending");
-    // Remove D1 immediately: slot 1 stays black while D2 keeps playing in slot 2.
+    // Remove D1 immediately; the selected warm drone keeps playing in slot 2.
     surfaces.get("D1")!.remove();
     elements.pilotBadge.textContent = "";
-    standbyStatus.textContent = "D2 · WARM / HANDOFF PENDING";
+    standbyStatus.textContent = `${promoted} · WARM / HANDOFF PENDING`;
     render();
     window.setTimeout(() => {
       event(promoted, "LEAD", "ELECTION_COMPLETE", "Promoted cached successor; no connection setup");
       event(promoted, "LEAD", "LEASE_ACQUIRED", "Local lead allocation updated");
-      event(promoted, "LEAD", "FEED_ENABLE_COMMAND", "Move already-playing D2 element to slot 1");
-      const video = surfaces.get(promoted)!;
+      event(promoted, "LEAD", "FEED_ENABLE_COMMAND", `Move already-playing ${promoted} element to slot 1`);
+      const video = warmVideo!;
       // moveBefore preserves the playing element's media state during reparenting.
       const leadSlot = elements.pilotScreen as HTMLElement & {
         moveBefore: (node: Node, child: Node | null) => void;
       };
       leadSlot.moveBefore(video, elements.pilotBadge);
       handoffPending = false;
-      elements.pilotBadge.textContent = `${promoted} · LEAD · SLOT 1`;
+      elements.pilotBadge.textContent = `${promoted} · LEAD · WEBCAM 2 · SLOT 1`;
       standby.prepend(make("div", "feed-surface feed-placeholder", "TELEMETRY ONLY"));
       standbyLabel.textContent = `${simulation.successorId} · SLOT 2`;
       standbyStatus.textContent = "SUCCESSOR · NO WEBCAM";
@@ -163,9 +175,9 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
       render();
       // Observe presentation separately; promotion never waits for another frame.
       video.requestVideoFrameCallback(() => {
-        event(promoted, "LEAD", "FEED_DETECTED", "First presented D2 frame after slot move");
+        event(promoted, "LEAD", "FEED_DETECTED", `First presented ${promoted} frame after slot move`);
         elements.switchTime.textContent = `${(performance.now() - pressedAt).toFixed(1)} ms`;
-        elements.switchNote.textContent = `kill click → presented D2 frame; includes ${DEMO_LIMITS.switchDelayMs} ms demo delay`;
+        elements.switchNote.textContent = `kill click → presented ${promoted} frame; includes ${DEMO_LIMITS.switchDelayMs} ms demo delay`;
         render();
       });
     }, DEMO_LIMITS.switchDelayMs);

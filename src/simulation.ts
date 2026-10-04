@@ -12,7 +12,7 @@ export interface Drone {
   role: DroneRole;
 }
 
-export const DEMO_LIMITS = { latencyMin: 10, latencyMax: 200, leadMargin: 0.04, switchDelayMs: 550 };
+export const DEMO_LIMITS = { latencyMin: 10, latencyMax: 200, leadMargin: 0.04, switchDelayMs: 550, warmRotationMs: 10_000 };
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export function rankingScore(drone: Drone): number {
@@ -37,9 +37,12 @@ export class DroneSimulation {
   successorId: string | null = "D2";
   rankedCandidates: readonly Drone[] = [];
 
-  constructor() { this.rankAndAllocate(); }
+  constructor() {
+    this.varyWarmCandidates(0);
+    this.rankAndAllocate();
+  }
 
-  updateTelemetry(): void {
+  updateTelemetry(elapsedMs?: number): void {
     this.tick += 1;
     this.drones.forEach((drone, index) => {
       if (!drone.online) return;
@@ -48,12 +51,30 @@ export class DroneSimulation {
       drone.x = base.x + 1.5 * wave;
       drone.y = base.y + Math.cos(this.tick * 0.2 + index);
       drone.z = base.z + 0.5 * wave;
-      // Bounded around distinct baselines: D1 stays first and D2 stays second.
+      // Hold D2/D3's final metrics after the kill so the promoted lead stays put.
+      if (index === 1 || index === 2) return;
       drone.battery = base.battery - 0.5 + 0.5 * wave;
       drone.link = base.link + wave;
       drone.latency = base.latency + 2 * wave;
     });
+    if (this.drones[0]!.online) this.varyWarmCandidates(elapsedMs ?? this.tick * 1000);
     this.rankAndAllocate();
+  }
+
+  private varyWarmCandidates(elapsedMs: number): void {
+    const period = DEMO_LIMITS.warmRotationMs;
+    // A linear triangle wave crosses the candidates' scores every 10 seconds.
+    // Start just past the midpoint so D2 wins at startup and switches on tick 10.
+    const phase = (elapsedMs + 1.5 * period + 100) % (2 * period);
+    const blend = phase <= period ? phase / period : 2 - phase / period;
+    const high = this.baselines[1]!;
+    const low = this.baselines[2]!;
+    for (const [index, weight] of [[1, blend], [2, 1 - blend]] as const) {
+      const drone = this.drones[index]!;
+      drone.battery = high.battery + (low.battery - high.battery) * weight;
+      drone.link = high.link + (low.link - high.link) * weight;
+      drone.latency = high.latency + (low.latency - high.latency) * weight;
+    }
   }
 
   killD1(): string {
