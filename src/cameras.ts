@@ -81,7 +81,7 @@ export async function openCameraSlots(
     const ids = (await listCameraIds(devices)).slice(0, limits.maxFeeds);
     for (const deviceId of ids) {
       const stream = await openCamera(devices, deviceId, limits);
-      if (stream !== null) slots.push({ label: droneLabel(slots.length), stream });
+      slots.push({ label: droneLabel(slots.length), stream });
     }
   } catch (error) {
     logWarning("cameras_unavailable", String(error));

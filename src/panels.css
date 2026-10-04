@@ -161,3 +161,25 @@ tbody tr:last-child td {
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+
+/* Local demo cards use the existing TALOS colour and typography tokens. */
+.drone-card {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  background: var(--panel);
+}
+.drone-card p { margin: 0; }
+.drone-card .node-state { font-size: 0.65rem; }
+.drone-card .telemetry { white-space: pre-line; font-size: 0.6rem; color: var(--muted); }
+.drone-card[data-state="LEAD"] { border-left-color: var(--lead); }
+.drone-card[data-state="SUCCESSOR"] { border-left-color: var(--successor); }
+.drone-card[data-state="ISOLATED"] { border-left-color: var(--alert); opacity: 0.6; }
+.telemetry-panel { overflow-x: auto; }
+.telemetry-panel td { white-space: nowrap; font-size: 0.75rem; }
+
+.demo-feed-screen { grid-template-rows: minmax(100px, 2fr) repeat(5, minmax(60px, 1fr)); }
+@media (max-width: 900px) {
+  .demo-feed-screen { grid-template-rows: none; grid-auto-rows: minmax(100px, auto); }
+}

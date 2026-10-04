@@ -31,7 +31,7 @@
         <span id="connection" class="chip-value" data-status="connecting">Connecting to relay</span>
       </p>
       <p id="demo-notice" class="notice" hidden>
-        Simulated demonstration &middot; decision delay is scripted, picture switch is measured
+        Live webcams &middot; simulated drone telemetry &middot; measured local failover
       </p>
     </div>
 
@@ -40,14 +40,14 @@
         <summary>Pilot</summary>
         <div class="feed">
           <section class="panel" aria-label="Pilot view">
-            <h2>Pilot view</h2>
+            <h2>Slot 1 · Current lead</h2>
             <div id="pilot-screen" class="pilot-screen">
               <p id="pilot-lost" class="pilot-lost" role="alert">WAITING FOR LEAD</p>
               <p id="pilot-badge" class="pilot-badge"></p>
             </div>
           </section>
           <section class="panel wall" aria-label="Drone feeds">
-            <h2>Drone feeds</h2>
+            <h2>Slot 2 · Warm successor / Drones</h2>
             <div id="feed-screen" class="feed-screen"></div>
           </section>
           <section class="panel feed-side" aria-label="Feed switch">

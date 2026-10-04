@@ -5,7 +5,7 @@ import { openCameraSlots, padSlots, type FeedSlot } from "./cameras";
 import { ChartsView } from "./chartsView";
 import { BrowserClock, BrowserScheduler, type Clock, type Scheduler } from "./clock";
 import { loadConfig, type DashboardConfig } from "./config";
-import { DemoSource } from "./demo";
+import { startLocalDemo } from "./localDemo";
 import { findElements, type DashboardElements } from "./dom";
 import { FeedView } from "./feedView";
 import { FeedWall } from "./feedWall";
@@ -66,23 +66,6 @@ function startLive(runtime: Runtime): void {
   new DashboardApp({ ...runtime, source, onState: createObserver(runtime, feed) }).start();
 }
 
-/**
- * The demo: DESTROY fails the scripted lead and RESTORE brings the failed drone back.
- * Every drone has a tile; only drones with a working camera take turns as lead.
- */
-function startDemo(runtime: Runtime): void {
-  const { config, clock, scheduler, elements } = runtime;
-  const source = new DemoSource(config.demoNodeCount, clock, scheduler);
-  const tiles = Math.max(config.minFeeds, config.demoNodeCount);
-  const feed = createFeed(runtime, tiles, (cameras) => source.setLeadPool(cameras));
-  elements.destroy.addEventListener("click", () => {
-    feed.noteDestroyPressed();
-    source.loseLead();
-  });
-  elements.restore.addEventListener("click", () => source.restoreLead());
-  new DashboardApp({ ...runtime, source, onState: createObserver(runtime, feed) }).start();
-}
-
 function main(): void {
   const runtime: Runtime = {
     config: loadConfig(import.meta.env),
@@ -91,7 +74,7 @@ function main(): void {
     elements: findElements(document),
   };
   if (runtime.config.source === "websocket") startLive(runtime);
-  else startDemo(runtime);
+  else startLocalDemo(runtime.elements, runtime.config);
 }
 
 try {
