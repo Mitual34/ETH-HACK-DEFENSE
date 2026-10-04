@@ -15,6 +15,7 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
   let epoch = 1;
   const startedAt = performance.now();
   let cameraReady = false;
+  let handoffPending = false;
   const surfaces = new Map<string, HTMLVideoElement>();
   const cards = new Map<string, { root: HTMLElement; role: HTMLElement; telemetry: HTMLElement }>();
 
@@ -80,7 +81,9 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
       return row;
     });
     elements.nodes.replaceChildren(...rows);
-    elements.demoHint.textContent = simulation.drones[0]!.online
+    elements.demoHint.textContent = handoffPending
+      ? "D1 offline. Slot 1 is black while D2 stays warm for the timed handoff."
+      : simulation.drones[0]!.online
       ? cameraReady ? "D2 is playing in slot 2 and ready to take over. KILL D1 promotes the cached successor."
         : "Allow camera access to warm both live webcam feeds."
       : `D1 offline. D2 leads in slot 1. ${simulation.successorId} is the next successor (telemetry only).`;
@@ -126,14 +129,20 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
 
   elements.destroy.addEventListener("click", () => {
     const pressedAt = performance.now();
+    handoffPending = true;
     elements.destroy.setAttribute("disabled", "");
     elements.switchNote.textContent = `Switch queued · ${DEMO_LIMITS.switchDelayMs} ms demo delay`;
-    // Keep both webcam elements playing during the deliberate demo delay.
+    event("D1", "ISOLATED", "FEED_LOSS", `KILL D1 pressed; ${DEMO_LIMITS.switchDelayMs} ms demo delay`, pressedAt - startedAt);
+    const promoted = simulation.killD1();
+    epoch += 1;
+    event(promoted, "LEAD", "FAILURE_DETECTED", "Offline lead bypasses retention hysteresis");
+    publishRoles("D1 offline; cached successor allocated; display handoff pending");
+    // Remove D1 immediately: slot 1 stays black while D2 keeps playing in slot 2.
+    surfaces.get("D1")!.remove();
+    elements.pilotBadge.textContent = "";
+    standbyStatus.textContent = "D2 · WARM / HANDOFF PENDING";
+    render();
     window.setTimeout(() => {
-      event("D1", "ISOLATED", "FEED_LOSS", `KILL D1 pressed; ${DEMO_LIMITS.switchDelayMs} ms demo delay`, pressedAt - startedAt);
-      const promoted = simulation.killD1();
-      epoch += 1;
-      event(promoted, "LEAD", "FAILURE_DETECTED", "Offline lead bypasses retention hysteresis");
       event(promoted, "LEAD", "ELECTION_COMPLETE", "Promoted cached successor; no connection setup");
       event(promoted, "LEAD", "LEASE_ACQUIRED", "Local lead allocation updated");
       event(promoted, "LEAD", "FEED_ENABLE_COMMAND", "Move already-playing D2 element to slot 1");
@@ -143,7 +152,7 @@ export function startLocalDemo(elements: DashboardElements, config: DashboardCon
         moveBefore: (node: Node, child: Node | null) => void;
       };
       leadSlot.moveBefore(video, elements.pilotBadge);
-      surfaces.get("D1")!.remove();
+      handoffPending = false;
       elements.pilotBadge.textContent = `${promoted} · LEAD · SLOT 1`;
       standby.prepend(make("div", "feed-surface feed-placeholder", "TELEMETRY ONLY"));
       standbyLabel.textContent = `${simulation.successorId} · SLOT 2`;
